@@ -10,7 +10,6 @@ INCLUDEPATH  += $${GLM_PATH}
 SOURCES   = main.cpp \
     viewer.cpp \
     grid.cpp \
-    main.cpp \
     shader.cpp \
     camera.cpp \
     meshLoader.cpp \
