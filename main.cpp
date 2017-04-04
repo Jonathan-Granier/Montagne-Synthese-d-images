@@ -24,7 +24,7 @@ int main(int argc,char** argv) {
   fmt.setProfile(QGLFormat::CoreProfile);
   fmt.setSampleBuffers(true);
 
-  Viewer viewer(getFilename(argc,argv),fmt);
+  Viewer viewer(fmt);
 
   viewer.setWindowTitle("Montagnes");
   viewer.show();

@@ -8,7 +8,7 @@
 using namespace std;
 
 
-Viewer::Viewer(char *filename,const QGLFormat &format)
+Viewer::Viewer(const QGLFormat &format)
   : QGLWidget(format),
     _timer(new QTimer(this)),
     _currentshader(0),
@@ -16,9 +16,9 @@ Viewer::Viewer(char *filename,const QGLFormat &format)
     _mode(false) {
 
   setlocale(LC_ALL,"C");
-
-  _mesh = new Mesh(filename);
-  _cam  = new Camera(_mesh->radius,glm::vec3(_mesh->center[0],_mesh->center[1],_mesh->center[2]));
+   _grid = new Grid();
+  //_mesh = new Mesh(filename);
+  _cam  = new Camera(_grid->radius,glm::vec3(_grid->center[0],_grid->center[1],_grid->center[2]));
 
   _timer->setInterval(10);
   connect(_timer,SIGNAL(timeout()),this,SLOT(updateGL()));
@@ -26,7 +26,8 @@ Viewer::Viewer(char *filename,const QGLFormat &format)
 
 Viewer::~Viewer() {
   delete _timer;
-  delete _mesh;
+  //delete _mesh;
+  delete _grid;
   delete _cam;
 
   // delete all GPU objects
@@ -108,7 +109,7 @@ void Viewer::createVAO() {
   glBindVertexArray(_vaoObject);
 
   // send and enable positions
-  glBindBuffer(GL_ARRAY_BUFFER,_buffers[0]);
+ /* glBindBuffer(GL_ARRAY_BUFFER,_buffers[0]);
   glBufferData(GL_ARRAY_BUFFER,_mesh->nb_vertices*3*sizeof(float),_mesh->vertices,GL_STATIC_DRAW);
   glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,(void *)0);
   glEnableVertexAttribArray(0);
@@ -134,7 +135,7 @@ void Viewer::createVAO() {
   // send faces
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,_buffers[4]);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER,_mesh->nb_faces*3*sizeof(unsigned int),_mesh->faces,GL_STATIC_DRAW);
-
+*/
 
   // create the VAO associated with a simple quad
   // 2 triangles that cover the viewport (a bit like in TP1)
@@ -166,26 +167,28 @@ void Viewer::createVAO() {
 
 void Viewer::createShaders() {
   // create 2 shaders: one for the first pass, one for the second pass
-  _shaderFirstPass = new Shader();
-  _shaderSecondPass = new Shader();
+  _shaderPerlinNoise = new Shader();
+  _shaderNormal = new Shader();
 
   ////////////
   /// TODO ///
   ////////////
-  //_shaderFirstPass->load("shaders/first-pass.vert","shaders/first-pass.frag");
-  //_shaderSecondPass->load("shaders/second-pass.vert","shaders/second-pass.frag");
+  _shaderPerlinNoise->load("shaders/noise.vert","shaders/noise.frag");
+  _shaderNormal->load("shaders/normal.vert","shaders/normal.frag");
+
+
 }
 
 void Viewer::deleteShaders() {
-  delete _shaderFirstPass;  _shaderFirstPass = NULL;
-  delete _shaderSecondPass; _shaderSecondPass = NULL;
+  delete _shaderPerlinNoise;  _shaderPerlinNoise = NULL;
+  delete _shaderNormal; _shaderNormal = NULL;
 }
 
 
 void Viewer::drawObject(const glm::vec3 &pos,const glm::vec3 &col) {
   // shader id
-  const int id = _shaderFirstPass->id();
-
+  const int id = _shaderPerlinNoise->id();
+/*
   // send uniform (constant) variables to the shader
   glm::mat4 mdv = glm::translate(_cam->mdvMatrix(),pos);
   glUniformMatrix4fv(glGetUniformLocation(id,"mdvMat"),1,GL_FALSE,&(mdv[0][0]));
@@ -196,7 +199,7 @@ void Viewer::drawObject(const glm::vec3 &pos,const glm::vec3 &col) {
   // activate faces and draw!
   glBindVertexArray(_vaoObject);
   glDrawElements(GL_TRIANGLES,3*_mesh->nb_faces,GL_UNSIGNED_INT,(void *)0);
-  glBindVertexArray(0);
+  glBindVertexArray(0);*/
 }
 
 void Viewer::drawQuad() {
@@ -205,8 +208,8 @@ void Viewer::drawQuad() {
 
 
 
-  const int id = _shaderSecondPass->id();
-
+  const int id = _shaderNormal->id();
+/*
   // send shader parameters
   glUniform3fv(glGetUniformLocation(id,"light"),1,&(_light[0]));
 
@@ -226,15 +229,12 @@ void Viewer::drawQuad() {
   glBindVertexArray(_vaoQuad);
   glDrawArrays(GL_TRIANGLES,0,6);
   glBindVertexArray(0);
+  */
 }
 
 void Viewer::paintGL() {
   // activate the created framebuffer object
-    _time += 0.001;
-    if(_time >= 1.)
-    {
-        _time=0.;
-    }
+
 
 
     glBindFramebuffer(GL_FRAMEBUFFER,_fbo);
@@ -250,7 +250,7 @@ void Viewer::paintGL() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   // draw multiple objects
-  const float r = _mesh->radius*2.5;
+  /*const float r = _mesh->radius*2.5;
   const int   v = 5;
   for(int i=-v;i<=v;++i) {
     for(int j=-v;j<=v;++j) {
@@ -267,7 +267,7 @@ void Viewer::paintGL() {
 
     }
   }
-
+*/
   // desactivate fbo
   glBindFramebuffer(GL_FRAMEBUFFER,0);
 
@@ -352,8 +352,8 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
   ////////////
   /// TODO ///
   ////////////
-  //_shaderFirstPass->reload("shaders/first-pass.vert","shaders/first-pass.frag");
-  //_shaderSecondPass->reload("shaders/second-pass.vert","shaders/second-pass.frag");
+  _shaderPerlinNoise->load("shaders/noise.vert","shaders/noise.frag");
+  _shaderNormal->load("shaders/normal.vert","shaders/normal.frag");
 
   updateGL();
 }
@@ -375,7 +375,7 @@ void Viewer::initializeGL() {
   glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
   glViewport(0,0,width(),height());
 
-  _time = 0;
+
   // initialize camera
   _cam->initialize(width(),height(),true);
 

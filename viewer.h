@@ -24,6 +24,8 @@
 #include "camera.h"
 #include "meshLoader.h"
 #include "shader.h"
+#include "grid.h"
+
 
 class Viewer : public QGLWidget {
  public:
@@ -58,14 +60,15 @@ class Viewer : public QGLWidget {
   QTimer        *_timer;    // timer that controls the animation
   unsigned int   _currentshader; // current shader index
 
-  Mesh   *_mesh;   // the mesh
+  //Mesh   *_mesh;   // the mesh
+  Grid   *_grid;      // the grid
   Camera *_cam;    // the camera
 
   glm::vec3 _light; // light direction
   bool      _mode;  // camera motion or light motion
 
-  Shader *_shaderFirstPass; // shader used to draw geometry in the FBO
-  Shader *_shaderSecondPass; // shader used to compute lighting
+  Shader *_shaderPerlinNoise;
+  Shader *_shaderNormal;
 
   // vao/vbo ids (1 for the object, 1 for the viewport quad)
   GLuint _vaoObject;
@@ -78,7 +81,6 @@ class Viewer : public QGLWidget {
   GLuint _rendColorId;
   GLuint _rendDepthId;
 
-  float _time;
 
   // fbo id
   GLuint _fbo;
