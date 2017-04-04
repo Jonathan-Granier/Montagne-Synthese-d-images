@@ -7,7 +7,7 @@ TARGET    = montagnes
 LIBS     += -lGLEW -lGL -lGLU -lm
 INCLUDEPATH  += $${GLM_PATH}
 
-SOURCES   = main.cpp viewer.cpp \
+SOURCES   = main.cpp \
     viewer.cpp \
     grid.cpp \
     main.cpp \
@@ -17,7 +17,6 @@ SOURCES   = main.cpp viewer.cpp \
     trackball.cpp
 
 HEADERS   = viewer.h \
-    viewer.h \
     grid.h \
     vec4.h \
     vec3.h \
