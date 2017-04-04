@@ -11,7 +11,6 @@ SOURCES   = main.cpp viewer.cpp \
     viewer.cpp \
     grid.cpp \
     main.cpp \
-    vec3.cpp \
     shader.cpp
 
 HEADERS   = viewer.h \
