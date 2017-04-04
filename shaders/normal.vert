@@ -1,5 +1,9 @@
+#version 330
+
 layout(location = 0) in vec3 position;
 
+// A débattre
+uniform vec2 vertex;
 out vec2 texcoord;
 
 

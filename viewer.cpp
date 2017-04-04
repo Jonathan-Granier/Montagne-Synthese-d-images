@@ -18,7 +18,7 @@ Viewer::Viewer(const QGLFormat &format)
   setlocale(LC_ALL,"C");
    _grid = new Grid();
   //_mesh = new Mesh(filename);
-  _cam  = new Camera(_grid->radius,glm::vec3(_grid->center[0],_grid->center[1],_grid->center[2]));
+  //_cam  = new Camera(_grid->radius,glm::vec3(_grid->center[0],_grid->center[1],_grid->center[2]));
 
   _timer->setInterval(10);
   connect(_timer,SIGNAL(timeout()),this,SLOT(updateGL()));
@@ -28,21 +28,12 @@ Viewer::~Viewer() {
   delete _timer;
   //delete _mesh;
   delete _grid;
-  delete _cam;
+  //delete _cam;
 
   // delete all GPU objects
   deleteShaders();
   deleteVAO();
   deleteFBO();
-}
-
-void Viewer::deleteVAO() {
-  // delete VAOs
-  glDeleteBuffers(5,_buffers);
-  glDeleteBuffers(1,&_quad);
-
-  glDeleteVertexArrays(1,&_vaoObject);
-  glDeleteVertexArrays(1,&_vaoQuad);
 }
 
 void Viewer::createFBO() {
@@ -97,72 +88,44 @@ void Viewer::deleteFBO() {
   glDeleteTextures(1,&_rendColorId);
   glDeleteTextures(1,&_rendDepthId);
 }
-
 void Viewer::createVAO() {
-  // create VAO
-  glGenVertexArrays(1,&_vaoObject);
+  //the variable _grid should be an instance of Grid
+  //the .h file should contain the following VAO/buffer ids
+  //GLuint _vaoTerrain;
+  //GLuint _vaoQuad;
+  //GLuint _terrain[2];
+  //GLuint _quad;
 
-  // create 5 associated VBOs (for positions, normals, tangents, coords and face indices)
-  glGenBuffers(5,_buffers);
+  const GLfloat quadData[] = {
+    -1.0f,-1.0f,0.0f, 1.0f,-1.0f,0.0f, -1.0f,1.0f,0.0f, -1.0f,1.0f,0.0f, 1.0f,-1.0f,0.0f, 1.0f,1.0f,0.0f };
 
-  // bind VAO
-  glBindVertexArray(_vaoObject);
+  glGenBuffers(2,_terrain);
+  glGenBuffers(1,&_quad);
+  glGenVertexArrays(1,&_vaoTerrain);
+  glGenVertexArrays(1,&_vaoQuad);
 
-  // send and enable positions
- /* glBindBuffer(GL_ARRAY_BUFFER,_buffers[0]);
-  glBufferData(GL_ARRAY_BUFFER,_mesh->nb_vertices*3*sizeof(float),_mesh->vertices,GL_STATIC_DRAW);
+  // create the VBO associated with the grid (the terrain)
+  glBindVertexArray(_vaoTerrain);
+  glBindBuffer(GL_ARRAY_BUFFER,_terrain[0]); // vertices
+  glBufferData(GL_ARRAY_BUFFER,_grid->nbVertices()*3*sizeof(float),_grid->vertices(),GL_STATIC_DRAW);
   glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,(void *)0);
   glEnableVertexAttribArray(0);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,_terrain[1]); // indices
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,_grid->nbFaces()*3*sizeof(int),_grid->faces(),GL_STATIC_DRAW);
 
-  // send and enable normals
-  glBindBuffer(GL_ARRAY_BUFFER,_buffers[1]);
-  glBufferData(GL_ARRAY_BUFFER,_mesh->nb_vertices*3*sizeof(float),_mesh->normals,GL_STATIC_DRAW);
-  glVertexAttribPointer(1,3,GL_FLOAT,GL_TRUE,0,(void *)0);
-  glEnableVertexAttribArray(1);
-
-  // send and enable tangents
-  glBindBuffer(GL_ARRAY_BUFFER,_buffers[2]);
-  glBufferData(GL_ARRAY_BUFFER,_mesh->nb_vertices*3*sizeof(float),_mesh->tangents,GL_STATIC_DRAW);
-  glVertexAttribPointer(2,3,GL_FLOAT,GL_TRUE,0,(void *)0);
-  glEnableVertexAttribArray(2);
-
-  // send and enable coords
-  glBindBuffer(GL_ARRAY_BUFFER,_buffers[3]);
-  glBufferData(GL_ARRAY_BUFFER,_mesh->nb_vertices*2*sizeof(float),_mesh->coords,GL_STATIC_DRAW);
-  glVertexAttribPointer(3,2,GL_FLOAT,GL_FALSE,0,(void *)0);
-  glEnableVertexAttribArray(3);
-
-  // send faces
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,_buffers[4]);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER,_mesh->nb_faces*3*sizeof(unsigned int),_mesh->faces,GL_STATIC_DRAW);
-*/
-
-  // create the VAO associated with a simple quad
-  // 2 triangles that cover the viewport (a bit like in TP1)
-  static const GLfloat quadData[] = {
-    -1.0f, -1.0f, 0.0f,
-     1.0f, -1.0f, 0.0f,
-    -1.0f,  1.0f, 0.0f,
-    -1.0f,  1.0f, 0.0f,
-     1.0f, -1.0f, 0.0f,
-     1.0f,  1.0f, 0.0f,
-  };
-
-  // create VAO
-  glGenVertexArrays(1,&_vaoQuad);
-  glGenBuffers(1,&_quad);
-
-  // bind VAO
+  // create the VBO associated with the screen quad
   glBindVertexArray(_vaoQuad);
-
-  // send and enable vertices
-  glBindBuffer(GL_ARRAY_BUFFER,_quad);
+  glBindBuffer(GL_ARRAY_BUFFER,_quad); // vertices
   glBufferData(GL_ARRAY_BUFFER, sizeof(quadData),quadData,GL_STATIC_DRAW);
   glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,(void *)0);
   glEnableVertexAttribArray(0);
+}
 
-  // back to normal
-  glBindVertexArray(0);
+void Viewer::deleteVAO() {
+  glDeleteBuffers(2,_terrain);
+  glDeleteBuffers(1,&_quad);
+  glDeleteVertexArrays(1,&_vaoTerrain);
+  glDeleteVertexArrays(1,&_vaoQuad);
 }
 
 void Viewer::createShaders() {
@@ -208,7 +171,11 @@ void Viewer::drawQuad() {
 
 
 
-  const int id = _shaderNormal->id();
+
+
+
+
+  const int id = _shaderPerlinNoise->id();
 /*
   // send shader parameters
   glUniform3fv(glGetUniformLocation(id,"light"),1,&(_light[0]));
@@ -223,54 +190,53 @@ void Viewer::drawQuad() {
   glActiveTexture(GL_TEXTURE0+1);
   glBindTexture(GL_TEXTURE_2D,_rendNormalId);
   glUniform1i(glGetUniformLocation(id,"normalmap"),1);
-
+*/
 
   // Draw the 2 triangles !
   glBindVertexArray(_vaoQuad);
   glDrawArrays(GL_TRIANGLES,0,6);
   glBindVertexArray(0);
-  */
+}
+
+void Viewer::drawPerlin(){
+
+    const int id = _shaderPerlinNoise->id();
+
+    glBindVertexArray(_vaoObject);
+    //glDrawElements(GL_TRIANGLES,3*_grid->_nbFaces,GL_UNSIGNED_INT,(void *)0);
+    glBindVertexArray(0);
 }
 
 void Viewer::paintGL() {
   // activate the created framebuffer object
 
+// PERLIN
 
 
-    glBindFramebuffer(GL_FRAMEBUFFER,_fbo);
-
+    //glBindFramebuffer(GL_FRAMEBUFFER,_fbo);
+/*
   // activate the shader
-  glUseProgram(_shaderFirstPass->id());
+  glUseProgram(_shaderPerlinNoise->id());
 
   GLenum bufferlist [] = {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1};
 
   glDrawBuffers(2,bufferlist);
-
+*/
   // clear buffers
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  glUseProgram(_shaderPerlinNoise->id());
+  drawQuad();
+  glUseProgram(0);
+
   // draw multiple objects
-  /*const float r = _mesh->radius*2.5;
-  const int   v = 5;
-  for(int i=-v;i<=v;++i) {
-    for(int j=-v;j<=v;++j) {
-        if((i+j)%3 == 0)
-            if(_time < 0.5)
-                drawObject(glm::vec3(i*r,_time*2,j*r),glm::vec3((float)(i+v)/(float)(2*v+1),0.5,(float)(j+v)/(float)(2*v+1)));
-            else
-                drawObject(glm::vec3(i*r,1- (_time - 0.5)*2,j*r),glm::vec3((float)(i+v)/(float)(2*v+1),0.5,(float)(j+v)/(float)(2*v+1)));
-        else
-            if(_time < 0.5)
-                drawObject(glm::vec3(i*r,-_time*2,j*r),glm::vec3((float)(i+v)/(float)(2*v+1),0.5,(float)(j+v)/(float)(2*v+1)));
-            else
-                drawObject(glm::vec3(i*r,-1+(_time - 0.5)*2,j*r),glm::vec3((float)(i+v)/(float)(2*v+1),0.5,(float)(j+v)/(float)(2*v+1)));
 
-    }
-  }
-*/
   // desactivate fbo
-  glBindFramebuffer(GL_FRAMEBUFFER,0);
+  //glBindFramebuffer(GL_FRAMEBUFFER,0);
 
+
+
+  /*
   // clear everything
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -282,11 +248,11 @@ void Viewer::paintGL() {
 
   // disable shader
   glUseProgram(0);
-
+*/
 }
 
 void Viewer::resizeGL(int width,int height) {
-  _cam->initialize(width,height,false);
+  //_cam->initialize(width,height,false);
   glViewport(0,0,width,height);
 
   // re-init the FBO (textures need to be resized to the new viewport size)
@@ -298,10 +264,10 @@ void Viewer::mousePressEvent(QMouseEvent *me) {
   const glm::vec2 p((float)me->x(),(float)(height()-me->y()));
 
   if(me->button()==Qt::LeftButton) {
-    _cam->initRotation(p);
+    //_cam->initRotation(p);
     _mode = false;
   } else if(me->button()==Qt::MidButton) {
-    _cam->initMoveZ(p);
+    //_cam->initMoveZ(p);
     _mode = false;
   } else if(me->button()==Qt::RightButton) {
     _light[0] = (p[0]-(float)(width()/2))/((float)(width()/2));
@@ -325,7 +291,7 @@ void Viewer::mouseMoveEvent(QMouseEvent *me) {
     _light = glm::normalize(_light);
   } else {
     // camera mode
-    _cam->move(p);
+    //_cam->move(p);
   }
 
   updateGL();
@@ -345,7 +311,7 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
 
   // key i: init camera
   if(ke->key()==Qt::Key_I) {
-    _cam->initialize(width(),height(),true);
+    //_cam->initialize(width(),height(),true);
   }
 
   // key r: reload shaders
@@ -377,7 +343,7 @@ void Viewer::initializeGL() {
 
 
   // initialize camera
-  _cam->initialize(width(),height(),true);
+  //_cam->initialize(width(),height(),true);
 
   // load shader files
   createShaders();
@@ -388,6 +354,7 @@ void Viewer::initializeGL() {
   // create/init FBO
   createFBO();
   initFBO();
+
 
   // starts the timer
   _timer->start();

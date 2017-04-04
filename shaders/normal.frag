@@ -1,3 +1,5 @@
+#version 330
+
 out vec4 outBuffer;
 uniform sampler2D heightmap;
 
@@ -14,7 +16,7 @@ float value(in vec4 c) {
 
 
 void main() {
-
+/*
 	vec2 ps = 1./vec2(textureSize(heightmap,0));
 
 	vec2 g = vec2( value(texture(heightmap,texcoord+vec2(ps.x,0.))) -
@@ -35,7 +37,7 @@ void main() {
 
 
 	outbuffer = vec4(n,value(texture(heightmap,texcoord)));
-
+*/
 }
 
 
