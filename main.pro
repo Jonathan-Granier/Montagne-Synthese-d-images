@@ -1,7 +1,7 @@
 GLM_PATH  = ../../ext/glm-0.9.4.1
 
 TEMPLATE  = app
-TARGET    = projet
+TARGET    = montagnes
 
 
 LIBS     += -lGLEW -lGL -lGLU -lm
@@ -11,7 +11,9 @@ SOURCES   = main.cpp viewer.cpp \
     viewer.cpp \
     grid.cpp \
     main.cpp \
-    shader.cpp
+    shader.cpp \
+    camera.cpp \
+    meshLoader.cpp
 
 HEADERS   = viewer.h \
     viewer.h \
@@ -21,7 +23,10 @@ HEADERS   = viewer.h \
     vec2.h \
     shader.h \
     mat4.h \
-    mat3.h
+    mat3.h \
+    camera.h \
+    meshLoader.h \
+    quat.h
 
 CONFIG   += qt opengl warn_on thread uic4 release
 QT       *= xml opengl core
