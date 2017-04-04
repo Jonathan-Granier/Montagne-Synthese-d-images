@@ -169,8 +169,11 @@ void Viewer::createShaders() {
   _shaderFirstPass = new Shader();
   _shaderSecondPass = new Shader();
 
-  _shaderFirstPass->load("shaders/first-pass.vert","shaders/first-pass.frag");
-  _shaderSecondPass->load("shaders/second-pass.vert","shaders/second-pass.frag");
+  ////////////
+  /// TODO ///
+  ////////////
+  //_shaderFirstPass->load("shaders/first-pass.vert","shaders/first-pass.frag");
+  //_shaderSecondPass->load("shaders/second-pass.vert","shaders/second-pass.frag");
 }
 
 void Viewer::deleteShaders() {
@@ -346,8 +349,11 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
   }
 
   // key r: reload shaders
-  _shaderFirstPass->reload("shaders/first-pass.vert","shaders/first-pass.frag");
-  _shaderSecondPass->reload("shaders/second-pass.vert","shaders/second-pass.frag");
+  ////////////
+  /// TODO ///
+  ////////////
+  //_shaderFirstPass->reload("shaders/first-pass.vert","shaders/first-pass.frag");
+  //_shaderSecondPass->reload("shaders/second-pass.vert","shaders/second-pass.frag");
 
   updateGL();
 }
