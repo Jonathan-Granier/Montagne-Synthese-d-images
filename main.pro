@@ -13,7 +13,8 @@ SOURCES   = main.cpp viewer.cpp \
     main.cpp \
     shader.cpp \
     camera.cpp \
-    meshLoader.cpp
+    meshLoader.cpp \
+    trackball.cpp
 
 HEADERS   = viewer.h \
     viewer.h \
@@ -26,7 +27,8 @@ HEADERS   = viewer.h \
     mat3.h \
     camera.h \
     meshLoader.h \
-    quat.h
+    quat.h \
+    trackball.h
 
 CONFIG   += qt opengl warn_on thread uic4 release
 QT       *= xml opengl core

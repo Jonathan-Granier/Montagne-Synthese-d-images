@@ -26,7 +26,7 @@ int main(int argc,char** argv) {
 
   Viewer viewer(getFilename(argc,argv),fmt);
 
-  viewer.setWindowTitle("Exercice 07 - Deferred Shading");
+  viewer.setWindowTitle("Montagnes");
   viewer.show();
 
   return application.exec();
