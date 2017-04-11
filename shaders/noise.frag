@@ -2,7 +2,7 @@
 
 in vec2 pos;
 
-out vec4 outBuffer;
+layout(location = 0) out vec4 outBuffer;
 
 vec2 hash(vec2 p) {
   p = vec2( dot(p,vec2(127.1,311.7)),

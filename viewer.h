@@ -44,8 +44,7 @@ class Viewer : public QGLWidget {
   void createVAO();
   void deleteVAO();
   void drawObject(const glm::vec3 &pos,const glm::vec3 &col);
-  void drawQuad();
-  void drawPerlin();
+  void drawQuad(const int id);
 
   void createShaders();
   void deleteShaders();
@@ -69,6 +68,7 @@ class Viewer : public QGLWidget {
 
   Shader *_shaderPerlinNoise;
   Shader *_shaderNormal;
+  Shader *_shaderDisplacement;
 
   // vao/vbo ids (1 for the object, 1 for the viewport quad)
   GLuint _vaoTerrain;
@@ -76,19 +76,25 @@ class Viewer : public QGLWidget {
   GLuint _terrain[2];
   GLuint _quad;
 
-  //Inutile ??
-  GLuint _vaoObject;
   GLuint _buffers[5];
 
 
   // render texture ids
-  GLuint _rendNormalId;
+  GLuint _perlHeightId;
+  GLuint _perlNormalId;
+  GLuint _perlDepthId;
+/*
+  // render texture ids
   GLuint _rendColorId;
+  GLuint _rendNormalId;
   GLuint _rendDepthId;
-
+*/
 
   // fbo id
-  GLuint _fbo;
+  GLuint _fbo_normal;
+  //GLuint _fbo_displaced;
+  //GLuint _fbo_shadow;
+
 };
 
 #endif // VIEWER_H
