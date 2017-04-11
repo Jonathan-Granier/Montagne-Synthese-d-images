@@ -19,13 +19,11 @@ void main() {
 
 	vec2 ps = 1./vec2(textureSize(heightmap,0));
 
-	vec2 g = vec2( value(texture(heightmap,texcoord+vec2(ps.x,0.))) -
+        vec2 g = vec2(  value(texture(heightmap,texcoord+vec2(ps.x,0.))) -
+                        value(texture(heightmap,texcoord-vec2(ps.x,0.))),
 
-	value(texture(heightmap,texcoord-vec2(ps.x,0.))),
-
-	value(texture(heightmap,texcoord+vec2(0.,ps.y))) -
-
-	value(texture(heightmap,texcoord-vec2(0.,ps.y))))/2.;
+                        value(texture(heightmap,texcoord+vec2(0.,ps.y))) -
+                        value(texture(heightmap,texcoord-vec2(0.,ps.y)))  )/2.;
 
 	float scale = 100.;
 
@@ -39,6 +37,4 @@ void main() {
         outBuffer = vec4(n,value(texture(heightmap,texcoord)));
 
 }
-
-
 

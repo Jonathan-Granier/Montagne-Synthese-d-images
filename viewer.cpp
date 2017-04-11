@@ -150,7 +150,7 @@ void Viewer::deleteShaders() {
 
 void Viewer::drawObject(const glm::vec3 &pos,const glm::vec3 &col) {
   // shader id
-  const int id = _shaderPerlinNoise->id();
+  const int id = _shaderNormal->id();
 /*
   // send uniform (constant) variables to the shader
   glm::mat4 mdv = glm::translate(_cam->mdvMatrix(),pos);
@@ -162,19 +162,12 @@ void Viewer::drawObject(const glm::vec3 &pos,const glm::vec3 &col) {
   // activate faces and draw!
   glBindVertexArray(_vaoObject);
   glDrawElements(GL_TRIANGLES,3*_mesh->nb_faces,GL_UNSIGNED_INT,(void *)0);
-  glBindVertexArray(0);*/
+  glBindVertexArray(0);
+ */
 }
 
 void Viewer::drawQuad() {
   // shader id
-
-
-
-
-
-
-
-
   const int id = _shaderPerlinNoise->id();
 /*
   // send shader parameters
@@ -191,6 +184,9 @@ void Viewer::drawQuad() {
   glBindTexture(GL_TEXTURE_2D,_rendNormalId);
   glUniform1i(glGetUniformLocation(id,"normalmap"),1);
 */
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D,_rendColorId);
+  glUniform1i(glGetUniformLocation(id,"heightmap"),0);
 
   // Draw the 2 triangles !
   glBindVertexArray(_vaoQuad);
@@ -208,47 +204,42 @@ void Viewer::drawPerlin(){
 }
 
 void Viewer::paintGL() {
-  // activate the created framebuffer object
-
-// PERLIN
 
 
-    //glBindFramebuffer(GL_FRAMEBUFFER,_fbo);
-/*
+//////////// PERLIN ////////////
+
+    // activate the created framebuffer object
+  glBindFramebuffer(GL_FRAMEBUFFER,_fbo);
+
   // activate the shader
   glUseProgram(_shaderPerlinNoise->id());
 
   GLenum bufferlist [] = {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1};
 
   glDrawBuffers(2,bufferlist);
-*/
+
   // clear buffers
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glUseProgram(_shaderPerlinNoise->id());
-  drawQuad();
-  glUseProgram(0);
-
   // draw multiple objects
+  drawQuad();
 
   // desactivate fbo
-  //glBindFramebuffer(GL_FRAMEBUFFER,0);
+  glBindFramebuffer(GL_FRAMEBUFFER,0);
 
-
-
-  /*
   // clear everything
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  // activate the shader
-  glUseProgram(_shaderSecondPass->id());
 
-  // Draw the triangles !
+//////////// NORMAL ////////////
+
+  // activate the shader
+  glUseProgram(_shaderNormal->id());
+
   drawQuad();
 
   // disable shader
   glUseProgram(0);
-*/
 }
 
 void Viewer::resizeGL(int width,int height) {
