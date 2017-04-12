@@ -8,7 +8,7 @@ in vec2 texcoord;
 uniform sampler2D normalmap;
 
 void main() {
-  //outBuffer = texture(normalmap,texcoord);
+  outBuffer = texture(normalmap,texcoord);
 
-  outBuffer = vec4(1,0,0,1);
+  //outBuffer = vec4(1,0,0,1);
 }

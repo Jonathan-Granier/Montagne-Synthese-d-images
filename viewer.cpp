@@ -52,7 +52,7 @@ void Viewer::initFBO() {
 
  // create the texture for perlin colors
   glBindTexture(GL_TEXTURE_2D,_perlHeightId);
-  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA32F,_grid->width(),_grid->height(),0,GL_RGBA,GL_FLOAT,NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA32F,width(),height(),0,GL_RGBA,GL_FLOAT,NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -60,7 +60,7 @@ void Viewer::initFBO() {
 
   // create the texture for perlin normals
   glBindTexture(GL_TEXTURE_2D,_perlNormalId);
-  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA32F,_grid->width(),_grid->height(),0,GL_RGBA,GL_FLOAT,NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA32F,width(),height(),0,GL_RGBA,GL_FLOAT,NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -68,7 +68,7 @@ void Viewer::initFBO() {
 
   // create the texture for perlin depth values
   glBindTexture(GL_TEXTURE_2D,_perlDepthId);
-  glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,_grid->width(),_grid->height(),0,GL_DEPTH_COMPONENT,GL_FLOAT,NULL);
+  glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,width(),height(),0,GL_DEPTH_COMPONENT,GL_FLOAT,NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -212,12 +212,7 @@ void Viewer::drawObject(const glm::vec3 &pos,const glm::vec3 &col) {
 
 }
 
-void Viewer::drawQuad(const int id) {
-
-  // Send the height map from perlin noise
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D,_perlHeightId);
-  glUniform1i(glGetUniformLocation(id,"heightmap"),0);
+void Viewer::drawQuad() {
 
   // Draw the 2 triangles !
   glBindVertexArray(_vaoQuad);
@@ -238,28 +233,39 @@ void Viewer::paintGL() {
   // clear buffers
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   // draw base quad
-  drawQuad(_shaderPerlinNoise->id());
-  // clear everything
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  drawQuad();
   // disable shader
   glUseProgram(0);
 
 
 //////////// NORMAL ////////////
 
+  // desactivate fbo
+  glBindFramebuffer(GL_FRAMEBUFFER,0);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  // activate the created framebuffer object
+  glBindFramebuffer(GL_FRAMEBUFFER,_fbo_normal);
+
   // activate the shader
   glUseProgram(_shaderNormal->id());
+
   GLenum buffer_normal [] = {GL_COLOR_ATTACHMENT1};
   glDrawBuffers(1,buffer_normal);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
   // draw base quad
-  drawQuad(_shaderNormal->id());
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D,_perlHeightId);
+  glUniform1i(glGetUniformLocation(_shaderNormal->id(),"heightmap"),0);
+  drawQuad();
+
+  // disable shader
+  glUseProgram(0);
+
   // desactivate fbo
   glBindFramebuffer(GL_FRAMEBUFFER,0);
   // clear everything
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  // disable shader
-  glUseProgram(0);
-
 
 //////////// DISPLACEMENT ////////////
 
@@ -272,6 +278,7 @@ void Viewer::paintGL() {
 
   // disable shader
   glUseProgram(0);
+
 
 }
 

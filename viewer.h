@@ -44,7 +44,7 @@ class Viewer : public QGLWidget {
   void createVAO();
   void deleteVAO();
   void drawObject(const glm::vec3 &pos,const glm::vec3 &col);
-  void drawQuad(const int id);
+  void drawQuad();
 
   void createShaders();
   void deleteShaders();
