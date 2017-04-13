@@ -32,6 +32,7 @@ Viewer::~Viewer() {
   deleteShaders();
   deleteVAO();
   deleteFBO();
+  deleteTexture();
 }
 
 void Viewer::createFBO() {
@@ -52,7 +53,7 @@ void Viewer::initFBO() {
 
  // create the texture for perlin colors
   glBindTexture(GL_TEXTURE_2D,_perlHeightId);
-  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA32F,width(),height(),0,GL_RGBA,GL_FLOAT,NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA32F,_grid->width(),_grid->height(),0,GL_RGBA,GL_FLOAT,NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -60,7 +61,7 @@ void Viewer::initFBO() {
 
   // create the texture for perlin normals
   glBindTexture(GL_TEXTURE_2D,_perlNormalId);
-  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA32F,width(),height(),0,GL_RGBA,GL_FLOAT,NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA32F,_grid->width(),_grid->height(),0,GL_RGBA,GL_FLOAT,NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -68,7 +69,7 @@ void Viewer::initFBO() {
 
   // create the texture for perlin depth values
   glBindTexture(GL_TEXTURE_2D,_perlDepthId);
-  glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,width(),height(),0,GL_DEPTH_COMPONENT,GL_FLOAT,NULL);
+  glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,_grid->width(),_grid->height(),0,GL_DEPTH_COMPONENT,GL_FLOAT,NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -135,6 +136,31 @@ void Viewer::deleteFBO() {
   glDeleteTextures(1,&_rendDepthId);
   */
 }
+
+void Viewer::createTexture(){
+  // generate 1 texture ids
+  glGenTextures(1,&_texRoche);
+  // load image
+  QImage image = QGLWidget::convertToGLFormat(QImage("textures/roche.jpg"));
+
+  // activate texture
+  glBindTexture(GL_TEXTURE_2D,_texRoche);
+
+  // set texture parameters
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_MIRRORED_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_MIRRORED_REPEAT);
+
+  // store texture in the GPU
+  glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,image.width(),image.height(),0,
+           GL_RGBA,GL_UNSIGNED_BYTE,(const GLvoid *)image.bits());
+}
+
+void Viewer::deleteTexture(){
+  glDeleteTextures(1,&_texRoche);
+}
+
 void Viewer::createVAO() {
 
   const GLfloat quadData[] = {
@@ -199,11 +225,16 @@ void Viewer::drawObject(const glm::vec3 &pos,const glm::vec3 &col) {
   glUniformMatrix4fv(glGetUniformLocation(id,"projMat"),1,GL_FALSE,&(_cam->projMatrix()[0][0]));
   glUniformMatrix3fv(glGetUniformLocation(id,"normalMat"),1,GL_FALSE,&(_cam->normalMatrix()[0][0]));
   glUniform3fv(glGetUniformLocation(id,"color"),1,&(col[0]));
+  glUniform3fv(glGetUniformLocation(id,"light"),1,&(_light[0]));
 
   // send the normal map (which contains the height)
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D,_perlNormalId);
   glUniform1i(glGetUniformLocation(id,"normalmap"),0);
+
+  glActiveTexture(GL_TEXTURE0+1);
+  glBindTexture(GL_TEXTURE_2D,_texRoche);
+  glUniform1i(glGetUniformLocation(id,"texroche"),1);
 
   // activate faces and draw!
   glBindVertexArray(_vaoTerrain);
@@ -222,6 +253,7 @@ void Viewer::drawQuad() {
 
 void Viewer::paintGL() {
 
+    glViewport(0,0,_grid->width(),_grid->height());
 //////////// PERLIN ////////////
 
   // activate the created framebuffer object
@@ -384,6 +416,7 @@ void Viewer::initializeGL() {
   createFBO();
   initFBO();
 
+  createTexture();
 
   // starts the timer
   _timer->start();

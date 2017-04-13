@@ -54,6 +54,9 @@ class Viewer : public QGLWidget {
   void deleteFBO();
   void initFBO();
 
+  void createTexture();
+  void deleteTexture();
+
 
 
   QTimer        *_timer;    // timer that controls the animation
@@ -95,6 +98,7 @@ class Viewer : public QGLWidget {
   //GLuint _fbo_displaced;
   //GLuint _fbo_shadow;
 
+  GLuint _texRoche;
 };
 
 #endif // VIEWER_H

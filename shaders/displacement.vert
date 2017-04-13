@@ -10,12 +10,15 @@ uniform mat3 normalMat; // normal matrix (constant for all the vertices)
 uniform sampler2D normalmap;
 
 out vec2 texcoord;
-
+out vec3 normalView;
+out vec3 eyeView;
 
 void main() {
   texcoord = position.xy*0.5+0.5;
-  vec3 pos = position + vec3(0,0,texture(normalmap,texcoord).a);
-
+  vec4 normal = texture(normalmap,texcoord);
+  vec3 pos = position + vec3(0,0,normal.a-0.5);
+  normalView  = normalize(normalMat*normal.xyz);
+  eyeView     = normalize(vec4(mdvMat*vec4(position,1.0)).xyz);
   gl_Position = projMat*mdvMat*vec4(pos,1.0);
 }
 
