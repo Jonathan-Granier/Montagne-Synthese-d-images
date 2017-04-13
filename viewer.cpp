@@ -253,17 +253,22 @@ void Viewer::drawQuad() {
 
 void Viewer::paintGL() {
 
-  glViewport(0,0,_grid->width(),_grid->height());
+  bool is_not_last_step;
 
 //////////// PERLIN ////////////
 
-  if(_currentstep > 0){
+  is_not_last_step = (_currentstep > 0);
+
+  if(is_not_last_step){  // Ce n'est pas la derniere etape, on stocke dans un fbo
+      glViewport(0,0,_grid->width(),_grid->height());
       // activate the created framebuffer object
       glBindFramebuffer(GL_FRAMEBUFFER,_fbo_normal);
       // set the buffers to draw in
       GLenum buffer_height [] = {GL_COLOR_ATTACHMENT0};
       glDrawBuffers(1,buffer_height);
   }
+  else
+      glViewport(0,0,width(),height());
 
   // activate the shader
   glUseProgram(_shaderPerlinNoise->id());
@@ -274,7 +279,7 @@ void Viewer::paintGL() {
   // disable shader
   glUseProgram(0);
 
-  if(_currentstep > 0){
+  if(is_not_last_step){
       // desactivate fbo
       glBindFramebuffer(GL_FRAMEBUFFER,0);
       // clear everything
@@ -283,14 +288,20 @@ void Viewer::paintGL() {
 
 //////////// NORMAL ////////////
 
+  is_not_last_step = (_currentstep > 1);
+
   if(_currentstep > 0){
-      if(_currentstep > 1){
+
+      if(is_not_last_step){
+          glViewport(0,0,_grid->width(),_grid->height());
           // activate the created framebuffer object
           glBindFramebuffer(GL_FRAMEBUFFER,_fbo_normal);
           // set the buffers to draw in
           GLenum buffer_normal [] = {GL_COLOR_ATTACHMENT1};
           glDrawBuffers(1,buffer_normal);
       }
+      else
+          glViewport(0,0,width(),height());
 
       // activate the shader
       glUseProgram(_shaderNormal->id());
@@ -307,7 +318,7 @@ void Viewer::paintGL() {
       // disable shader
       glUseProgram(0);
 
-      if(_currentstep > 1){
+      if(is_not_last_step){
           // desactivate fbo
           glBindFramebuffer(GL_FRAMEBUFFER,0);
           // clear everything
