@@ -11,7 +11,7 @@ Viewer::Viewer(const QGLFormat &format)
   : QGLWidget(format),
     _timer(new QTimer(this)),
     _currentstep(0),
-    _stepnumber(5),
+    _stepnumber(3),
     _light(glm::vec3(0,0,1)),
     _mode(false) {
 
@@ -253,15 +253,20 @@ void Viewer::drawQuad() {
 
 void Viewer::paintGL() {
 
-    glViewport(0,0,_grid->width(),_grid->height());
+  glViewport(0,0,_grid->width(),_grid->height());
+
 //////////// PERLIN ////////////
 
-  // activate the created framebuffer object
-  glBindFramebuffer(GL_FRAMEBUFFER,_fbo_normal);
+  if(_currentstep > 0){
+      // activate the created framebuffer object
+      glBindFramebuffer(GL_FRAMEBUFFER,_fbo_normal);
+      // set the buffers to draw in
+      GLenum buffer_height [] = {GL_COLOR_ATTACHMENT0};
+      glDrawBuffers(1,buffer_height);
+  }
+
   // activate the shader
   glUseProgram(_shaderPerlinNoise->id());
-  GLenum buffer_height [] = {GL_COLOR_ATTACHMENT0};
-  glDrawBuffers(1,buffer_height);
   // clear buffers
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   // draw base quad
@@ -269,48 +274,60 @@ void Viewer::paintGL() {
   // disable shader
   glUseProgram(0);
 
+  if(_currentstep > 0){
+      // desactivate fbo
+      glBindFramebuffer(GL_FRAMEBUFFER,0);
+      // clear everything
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  }
 
 //////////// NORMAL ////////////
 
-  // desactivate fbo
-  glBindFramebuffer(GL_FRAMEBUFFER,0);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  // activate the created framebuffer object
-  glBindFramebuffer(GL_FRAMEBUFFER,_fbo_normal);
+  if(_currentstep > 0){
+      if(_currentstep > 1){
+          // activate the created framebuffer object
+          glBindFramebuffer(GL_FRAMEBUFFER,_fbo_normal);
+          // set the buffers to draw in
+          GLenum buffer_normal [] = {GL_COLOR_ATTACHMENT1};
+          glDrawBuffers(1,buffer_normal);
+      }
 
-  // activate the shader
-  glUseProgram(_shaderNormal->id());
+      // activate the shader
+      glUseProgram(_shaderNormal->id());
+      // clear buffers
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  GLenum buffer_normal [] = {GL_COLOR_ATTACHMENT1};
-  glDrawBuffers(1,buffer_normal);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      // send the result of Perlin noise to shader
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D,_perlHeightId);
+      glUniform1i(glGetUniformLocation(_shaderNormal->id(),"heightmap"),0);
+      // draw base quad
+      drawQuad();
 
-  // draw base quad
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D,_perlHeightId);
-  glUniform1i(glGetUniformLocation(_shaderNormal->id(),"heightmap"),0);
-  drawQuad();
+      // disable shader
+      glUseProgram(0);
 
-  // disable shader
-  glUseProgram(0);
-
-  // desactivate fbo
-  glBindFramebuffer(GL_FRAMEBUFFER,0);
-  // clear everything
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      if(_currentstep > 1){
+          // desactivate fbo
+          glBindFramebuffer(GL_FRAMEBUFFER,0);
+          // clear everything
+          glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      }
+  }
 
 //////////// DISPLACEMENT ////////////
 
-  glViewport(0,0,width(),height());
-  // activate the shader
-  glUseProgram(_shaderDisplacement->id());
+  if(_currentstep > 1){
+      glViewport(0,0,width(),height());
+      // activate the shader
+      glUseProgram(_shaderDisplacement->id());
 
-  // draw base quad
-  drawObject(glm::vec3(0,0,0),glm::vec3(0,1,0));
+      // draw base quad
+      drawObject(glm::vec3(0,0,0),glm::vec3(0,1,0));
 
-  // disable shader
-  glUseProgram(0);
-
+      // disable shader
+      glUseProgram(0);
+  }
 
 }
 
