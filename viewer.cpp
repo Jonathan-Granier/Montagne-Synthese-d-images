@@ -10,8 +10,8 @@ using namespace std;
 Viewer::Viewer(const QGLFormat &format)
   : QGLWidget(format),
     _timer(new QTimer(this)),
-    _currentstep(0),
-    _stepnumber(3),
+    _currentstep(3),
+    _stepnumber(4),
     _light(glm::vec3(0,0,1)),
     _mode(false) {
 
@@ -41,12 +41,11 @@ void Viewer::createFBO() {
   glGenTextures(1,&_perlHeightId);
   glGenTextures(1,&_perlNormalId);
   glGenTextures(1,&_perlDepthId);
-  /*
-  glGenFramebuffers(1,&_fbo_displaced);
+
+  glGenFramebuffers(1,&_fbo_renderer);
   glGenTextures(1,&_rendColorId);
-  glGenTextures(1,&_rendNormalId);
   glGenTextures(1,&_rendDepthId);
-  */
+
 }
 
 void Viewer::initFBO() {
@@ -86,17 +85,9 @@ void Viewer::initFBO() {
   glBindFramebuffer(GL_FRAMEBUFFER,0);
 
   /////////////////////////////////////////////////////////////////////////////
-/*
+
   // create the texture for rendering colors
   glBindTexture(GL_TEXTURE_2D,_rendColorId);
-  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA32F,width(),height(),0,GL_RGBA,GL_FLOAT,NULL);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-  // create the texture for rendering normals
-  glBindTexture(GL_TEXTURE_2D,_rendNormalId);
   glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA32F,width(),height(),0,GL_RGBA,GL_FLOAT,NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -112,15 +103,13 @@ void Viewer::initFBO() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
   // attach textures to framebuffer object
-  glBindFramebuffer(GL_FRAMEBUFFER,_fbo_displaced);
+  glBindFramebuffer(GL_FRAMEBUFFER,_fbo_renderer);
   glBindTexture(GL_TEXTURE_2D,_rendColorId);
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,_rendColorId,0);
-  glBindTexture(GL_TEXTURE_2D,_rendNormalId);
-  glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT1,GL_TEXTURE_2D,_rendNormalId,0);
   glBindTexture(GL_TEXTURE_2D,_rendDepthId);
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,_rendDepthId,0);
   glBindFramebuffer(GL_FRAMEBUFFER,0);
-*/
+
 }
 
 void Viewer::deleteFBO() {
@@ -129,12 +118,11 @@ void Viewer::deleteFBO() {
   glDeleteTextures(1,&_perlHeightId);
   glDeleteTextures(1,&_perlNormalId);
   glDeleteTextures(1,&_perlDepthId);
-  /*
-  glDeleteFramebuffers(1,&_fbo_displaced);
+
+  glDeleteFramebuffers(1,&_fbo_renderer);
   glDeleteTextures(1,&_rendColorId);
-  glDeleteTextures(1,&_rendNormalId);
   glDeleteTextures(1,&_rendDepthId);
-  */
+
 }
 
 void Viewer::createTexture(){
@@ -196,15 +184,15 @@ void Viewer::deleteVAO() {
 }
 
 void Viewer::createShaders() {
-  // create 2 shaders: one for the first pass, one for the second pass
   _shaderPerlinNoise = new Shader();
   _shaderNormal = new Shader();
   _shaderDisplacement = new Shader();
+  _shaderPostProcessing = new Shader();
 
   _shaderPerlinNoise->load("shaders/noise.vert","shaders/noise.frag");
   _shaderNormal->load("shaders/normal.vert","shaders/normal.frag");
   _shaderDisplacement->load("shaders/displacement.vert","shaders/displacement.frag");
-
+  _shaderPostProcessing->load("shaders/post-processing.vert","shaders/post-processing.frag");
 
 }
 
@@ -212,19 +200,18 @@ void Viewer::deleteShaders() {
   delete _shaderPerlinNoise;  _shaderPerlinNoise = NULL;
   delete _shaderNormal; _shaderNormal = NULL;
   delete _shaderDisplacement; _shaderDisplacement = NULL;
+  delete _shaderPostProcessing; _shaderPostProcessing = NULL;
 }
 
 
-void Viewer::drawObject(const glm::vec3 &pos,const glm::vec3 &col) {
+void Viewer::drawTerrain() {
   // shader id
   const int id = _shaderDisplacement->id();
 
   // send uniform (constant) variables to the shader
-  glm::mat4 mdv = glm::translate(_cam->mdvMatrix(),pos);
-  glUniformMatrix4fv(glGetUniformLocation(id,"mdvMat"),1,GL_FALSE,&(mdv[0][0]));
+  glUniformMatrix4fv(glGetUniformLocation(id,"mdvMat"),1,GL_FALSE,&(_cam->mdvMatrix()[0][0]));
   glUniformMatrix4fv(glGetUniformLocation(id,"projMat"),1,GL_FALSE,&(_cam->projMatrix()[0][0]));
   glUniformMatrix3fv(glGetUniformLocation(id,"normalMat"),1,GL_FALSE,&(_cam->normalMatrix()[0][0]));
-  glUniform3fv(glGetUniformLocation(id,"color"),1,&(col[0]));
   glUniform3fv(glGetUniformLocation(id,"light"),1,&(_light[0]));
 
   // send the normal map (which contains the height)
@@ -290,7 +277,7 @@ void Viewer::paintGL() {
 
   is_not_last_step = (_currentstep > 1);
 
-  if(_currentstep > 0){
+  if(_currentstep >= 1){
 
       if(is_not_last_step){
           glViewport(0,0,_grid->width(),_grid->height());
@@ -328,18 +315,59 @@ void Viewer::paintGL() {
 
 //////////// DISPLACEMENT ////////////
 
-  if(_currentstep > 1){
+  is_not_last_step = (_currentstep > 2);
+
+  if(_currentstep >= 2){
+
+      if(is_not_last_step){
+          // activate the created framebuffer object
+          glBindFramebuffer(GL_FRAMEBUFFER,_fbo_renderer);
+          // set the buffers to draw in
+          GLenum buffer_render [] = {GL_COLOR_ATTACHMENT0};
+          glDrawBuffers(1,buffer_render);
+      }
       glViewport(0,0,width(),height());
       // activate the shader
       glUseProgram(_shaderDisplacement->id());
+      // clear buffers
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+      // draw terrain
+      drawTerrain();
+
+      // disable shader
+      glUseProgram(0);
+
+      if(is_not_last_step){
+          // desactivate fbo
+          glBindFramebuffer(GL_FRAMEBUFFER,0);
+          // clear everything
+          glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      }
+  }
+
+//////////// POST-PROCESSING ////////////
+
+  if(_currentstep >= 3){
+
+      // activate the shader
+      glUseProgram(_shaderPostProcessing->id());
+      // clear buffers
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+      // send computed textures to the shader
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D,_rendColorId);
+      glUniform1i(glGetUniformLocation(_shaderPostProcessing->id(),"colormap"),0);
+      glActiveTexture(GL_TEXTURE0+1);
+      glBindTexture(GL_TEXTURE_2D,_rendDepthId);
+      glUniform1i(glGetUniformLocation(_shaderPostProcessing->id(),"depthmap"),1);
       // draw base quad
-      drawObject(glm::vec3(0,0,0),glm::vec3(0,1,0));
+      drawQuad();
 
       // disable shader
       glUseProgram(0);
   }
-
 }
 
 void Viewer::resizeGL(int width,int height) {
@@ -410,6 +438,7 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
     _shaderPerlinNoise->load("shaders/noise.vert","shaders/noise.frag");
     _shaderNormal->load("shaders/normal.vert","shaders/normal.frag");
     _shaderDisplacement->load("shaders/displacement.vert","shaders/displacement.frag");
+    _shaderPostProcessing->load("shaders/post-processing.vert","shaders/post-processing.frag");
   }
 
   // space bar : switch to next step
