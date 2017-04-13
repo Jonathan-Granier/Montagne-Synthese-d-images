@@ -12,7 +12,6 @@ SOURCES   = main.cpp \
     grid.cpp \
     shader.cpp \
     camera.cpp \
-    meshLoader.cpp \
     trackball.cpp
 
 HEADERS   = viewer.h \
@@ -24,7 +23,6 @@ HEADERS   = viewer.h \
     mat4.h \
     mat3.h \
     camera.h \
-    meshLoader.h \
     quat.h \
     trackball.h
 

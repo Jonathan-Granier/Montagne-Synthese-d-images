@@ -22,7 +22,6 @@
 #include <stack>
 
 #include "camera.h"
-#include "meshLoader.h"
 #include "shader.h"
 #include "grid.h"
 
@@ -60,9 +59,9 @@ class Viewer : public QGLWidget {
 
 
   QTimer        *_timer;    // timer that controls the animation
-  unsigned int   _currentshader; // current shader index
+  unsigned int   _currentstep; // current shader index
+  unsigned int   _stepnumber;
 
-  //Mesh   *_mesh;   // the mesh
   Grid   *_grid;      // the grid
   Camera *_cam;    // the camera
 

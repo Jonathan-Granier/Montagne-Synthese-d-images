@@ -2,7 +2,6 @@
 
 #include <math.h>
 #include <iostream>
-#include "meshLoader.h"
 #include <QTime>
 
 using namespace std;
@@ -11,7 +10,8 @@ using namespace std;
 Viewer::Viewer(const QGLFormat &format)
   : QGLWidget(format),
     _timer(new QTimer(this)),
-    _currentshader(0),
+    _currentstep(0),
+    _stepnumber(5),
     _light(glm::vec3(0,0,1)),
     _mode(false) {
 
@@ -378,9 +378,16 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
   }
 
   // key r: reload shaders
-  _shaderPerlinNoise->load("shaders/noise.vert","shaders/noise.frag");
-  _shaderNormal->load("shaders/normal.vert","shaders/normal.frag");
-  _shaderDisplacement->load("shaders/displacement.vert","shaders/displacement.frag");
+  if(ke->key()==Qt::Key_R) {
+    _shaderPerlinNoise->load("shaders/noise.vert","shaders/noise.frag");
+    _shaderNormal->load("shaders/normal.vert","shaders/normal.frag");
+    _shaderDisplacement->load("shaders/displacement.vert","shaders/displacement.frag");
+  }
+
+  // space bar : switch to next step
+  if(ke->key()==Qt::Key_Space) {
+    _currentstep = (_currentstep+1)%_stepnumber;
+  }
 
   updateGL();
 }
