@@ -44,7 +44,6 @@ void Viewer::createFBO() {
 
   glGenFramebuffers(1,&_fbo_renderer);
   glGenTextures(1,&_rendColorId);
-  glGenTextures(1,&_rendNormalId);
   glGenTextures(1,&_rendDepthId);
 
 }
@@ -95,14 +94,6 @@ void Viewer::initFBO() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-  // create the texture for rendering normals
-  glBindTexture(GL_TEXTURE_2D,_rendNormalId);
-  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA32F,width(),height(),0,GL_RGBA,GL_FLOAT,NULL);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
   // create the texture for rendering depth values
   glBindTexture(GL_TEXTURE_2D,_rendDepthId);
   glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,width(),height(),0,GL_DEPTH_COMPONENT,GL_FLOAT,NULL);
@@ -115,8 +106,6 @@ void Viewer::initFBO() {
   glBindFramebuffer(GL_FRAMEBUFFER,_fbo_renderer);
   glBindTexture(GL_TEXTURE_2D,_rendColorId);
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,_rendColorId,0);
-  glBindTexture(GL_TEXTURE_2D,_rendNormalId);
-  glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT1,GL_TEXTURE_2D,_rendNormalId,0);
   glBindTexture(GL_TEXTURE_2D,_rendDepthId);
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,_rendDepthId,0);
   glBindFramebuffer(GL_FRAMEBUFFER,0);
@@ -132,7 +121,6 @@ void Viewer::deleteFBO() {
 
   glDeleteFramebuffers(1,&_fbo_renderer);
   glDeleteTextures(1,&_rendColorId);
-  glDeleteTextures(1,&_rendNormalId);
   glDeleteTextures(1,&_rendDepthId);
 
 }
@@ -214,6 +202,7 @@ void Viewer::deleteShaders() {
   delete _shaderDisplacement; _shaderDisplacement = NULL;
   delete _shaderPostProcessing; _shaderPostProcessing = NULL;
 }
+
 
 void Viewer::drawTerrain() {
   // shader id
@@ -334,8 +323,8 @@ void Viewer::paintGL() {
           // activate the created framebuffer object
           glBindFramebuffer(GL_FRAMEBUFFER,_fbo_renderer);
           // set the buffers to draw in
-          GLenum buffer_render [] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-          glDrawBuffers(2,buffer_render);
+          GLenum buffer_render [] = {GL_COLOR_ATTACHMENT0};
+          glDrawBuffers(1,buffer_render);
       }
       glViewport(0,0,width(),height());
       // activate the shader
@@ -371,9 +360,8 @@ void Viewer::paintGL() {
       glBindTexture(GL_TEXTURE_2D,_rendColorId);
       glUniform1i(glGetUniformLocation(_shaderPostProcessing->id(),"colormap"),0);
       glActiveTexture(GL_TEXTURE0+1);
-      glBindTexture(GL_TEXTURE_2D,_rendNormalId);
-      glUniform1i(glGetUniformLocation(_shaderPostProcessing->id(),"normalmap"),1);
-      glUniform3fv(glGetUniformLocation(_shaderPostProcessing->id(),"light"),1,&(_light[0]));
+      glBindTexture(GL_TEXTURE_2D,_rendDepthId);
+      glUniform1i(glGetUniformLocation(_shaderPostProcessing->id(),"depthmap"),1);
       // draw base quad
       drawQuad();
 

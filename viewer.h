@@ -89,7 +89,6 @@ class Viewer : public QGLWidget {
 
   // render texture ids
   GLuint _rendColorId;
-  GLuint _rendNormalId;
   GLuint _rendDepthId;
 
 
