@@ -11,14 +11,15 @@ uniform sampler2D normalmap;
 
 out vec2 texcoord;
 out vec3 normalView;
-out vec3 eyeView;
+out float depth;
 
 void main() {
   texcoord = position.xy*0.5+0.5;
-  vec4 normal = texture(normalmap,texcoord);
-  vec3 pos = position + vec3(0,0,normal.a-0.5);
-  normalView  = normalize(normalMat*normal.xyz);
-  eyeView     = normalize(vec4(mdvMat*vec4(position,1.0)).xyz);
+  float height = texture(normalmap,texcoord).a;
+  vec3 pos = position+vec3(0,0,height-0.5);
   gl_Position = projMat*mdvMat*vec4(pos,1.0);
+  vec3 normal = texture(normalmap,texcoord).xyz;
+  normalView  = normalMat*normal;
+  depth       = - (vec4(mdvMat*vec4(pos,1.0)).z) / 2.5;
 }
 
