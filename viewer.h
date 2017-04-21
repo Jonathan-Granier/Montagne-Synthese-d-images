@@ -56,6 +56,9 @@ class Viewer : public QGLWidget {
   void createTexture();
   void deleteTexture();
 
+  void drawSceneFromLight(GLuint id);
+  void drawShadowMap(GLuint id);
+
 
 
   QTimer        *_timer;    // timer that controls the animation
@@ -71,6 +74,8 @@ class Viewer : public QGLWidget {
   Shader *_shaderPerlinNoise;
   Shader *_shaderNormal;
   Shader *_shaderDisplacement;
+  Shader *_shaderShadowMap;
+  Shader *_debugShaderShadowMap;
   Shader *_shaderPostProcessing;
 
   // vao/vbo ids (1 for the object, 1 for the viewport quad)
@@ -96,7 +101,10 @@ class Viewer : public QGLWidget {
   // fbo id
   GLuint _fbo_normal;
   GLuint _fbo_renderer;
-  //GLuint _fbo_shadow;
+  GLuint _fbo_shadow;
+
+  GLuint _texShadow;
+
 
   GLuint _texRoche;
 };
