@@ -10,8 +10,8 @@ using namespace std;
 Viewer::Viewer(const QGLFormat &format)
   : QGLWidget(format),
     _timer(new QTimer(this)),
-    _currentstep(3),
-    _stepnumber(4),
+    _currentstep(4),
+    _stepnumber(5),
     _light(glm::vec3(0,0,1)),
     _mode(false) {
 
@@ -46,6 +46,10 @@ void Viewer::createFBO() {
   glGenTextures(1,&_rendColorId);
   glGenTextures(1,&_rendNormalId);
   glGenTextures(1,&_rendDepthId);
+
+  glGenFramebuffers(1,&_fbo_shadow);
+  glGenTextures(1,&_texShadow);
+
 
 }
 
@@ -120,6 +124,35 @@ void Viewer::initFBO() {
   glBindTexture(GL_TEXTURE_2D,_rendDepthId);
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,_rendDepthId,0);
   glBindFramebuffer(GL_FRAMEBUFFER,0);
+
+
+  /////////////////////////////////////////////////////////////////////////////
+
+
+  // create the texture for rendering depth values
+  glBindTexture(GL_TEXTURE_2D,_texShadow);
+  glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,_grid->width(),_grid->height(),0,GL_DEPTH_COMPONENT,GL_FLOAT,NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+
+
+  // attach textures to framebuffer object
+  glBindFramebuffer(GL_FRAMEBUFFER,_fbo_shadow);
+  glBindTexture(GL_TEXTURE_2D,_texShadow);
+  glFramebufferTexture2D(GL_FRAMEBUFFER_EXT,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,_texShadow,0);
+
+  // test if everything is ok
+  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    cout << "Warning: FBO not complete!" << endl;
+
+  // disable FBO
+  glBindFramebuffer(GL_FRAMEBUFFER,0);
+
 
 }
 
@@ -201,10 +234,16 @@ void Viewer::createShaders() {
   _shaderDisplacement = new Shader();
   _shaderPostProcessing = new Shader();
 
+  _shaderShadowMap = new Shader();
+  _debugShaderShadowMap = new Shader();
+
   _shaderPerlinNoise->load("shaders/noise.vert","shaders/noise.frag");
   _shaderNormal->load("shaders/normal.vert","shaders/normal.frag");
   _shaderDisplacement->load("shaders/displacement.vert","shaders/displacement.frag");
   _shaderPostProcessing->load("shaders/post-processing.vert","shaders/post-processing.frag");
+
+  _shaderShadowMap->load("shaders/shadow-map.vert","shaders/shadow-map.frag");
+  _debugShaderShadowMap->load("shaders/show-shadow-map.vert","shaders/show-shadow-map.frag");
 
 }
 
@@ -212,6 +251,8 @@ void Viewer::deleteShaders() {
   delete _shaderPerlinNoise;  _shaderPerlinNoise = NULL;
   delete _shaderNormal; _shaderNormal = NULL;
   delete _shaderDisplacement; _shaderDisplacement = NULL;
+  delete _shaderShadowMap; _shaderShadowMap = NULL;
+  delete _debugShaderShadowMap; _debugShaderShadowMap = NULL;
   delete _shaderPostProcessing; _shaderPostProcessing = NULL;
 }
 
@@ -248,6 +289,64 @@ void Viewer::drawQuad() {
   glDrawArrays(GL_TRIANGLES,0,6);
   glBindVertexArray(0);
 }
+
+
+
+void Viewer::drawSceneFromLight(GLuint id) {
+ // mdv matrix from the light point of view
+  const float size = _grid->height();
+  glm::vec3 l   = glm::transpose(_cam->normalMatrix())*_light;
+  glm::mat4 p   = glm::ortho<float>(-size,size,-size,size,-size,2*size);
+  glm::mat4 v   = glm::lookAt(l, glm::vec3(0,0,0), glm::vec3(0,1,0));
+  glm::mat4 m   = glm::mat4(1.0);
+  glm::mat4 mv  = v*m;
+
+ // glBindVertexArray(_vaoTerrain);
+
+  // draw several objects
+
+  //const float r = _mesh->radius*2;
+
+
+    const glm::vec3 pos = glm::vec3(0,1,0);
+    // send the modelview projection depth matrix
+    const glm::mat4 mvpDepth = p*glm::translate(mv,pos);
+    glUniformMatrix4fv(glGetUniformLocation(id,"mvpMat"),1,GL_FALSE,&mvpDepth[0][0]);
+
+    // draw faces
+   // glDrawElements(GL_TRIANGLES,3*_grid->nbFaces(),GL_UNSIGNED_INT,(void *)0);
+
+
+
+  // send initial mvp depth matrix
+  //const glm::mat4 mvpDepth_2 = p*mv;
+  //glUniformMatrix4fv(glGetUniformLocation(id,"mvpMat"),1,GL_FALSE,&mvpDepth_2[0][0]);
+
+  // draw the floor
+  glBindVertexArray(_vaoTerrain);
+  glDrawElements(GL_TRIANGLES,3*_grid->nbFaces(),GL_UNSIGNED_INT,(void *)0);
+  glBindVertexArray(0);
+
+
+  // disable VAO
+ // glBindVertexArray(0);
+}
+
+
+void Viewer::drawShadowMap(GLuint id) {
+  // send depth texture
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D,_texShadow);
+  glUniform1i(glGetUniformLocation(id,"shadowmap"),0);
+
+  // draw the quad
+  glBindVertexArray(_vaoQuad);
+  glDrawArrays(GL_TRIANGLES,0,6);
+
+  // disable VAO
+  glBindVertexArray(0);
+}
+
 
 void Viewer::paintGL() {
 
@@ -357,9 +456,43 @@ void Viewer::paintGL() {
       }
   }
 
+
+
+
+
+//////////// SHADOW_MAP ////////////
+    if (true)
+    {
+        is_not_last_step = (_currentstep > 3);
+
+        if(_currentstep >= 3){
+            glBindFramebuffer(GL_FRAMEBUFFER,_fbo_shadow);                       //ACTIVATION
+            glDrawBuffer(GL_NONE);                                        //On veut pas de couleur
+            glViewport(0,0,width(),height());                             //On dessine dans cette fenetre
+            glClear(GL_DEPTH_BUFFER_BIT);                                 //On nettoie le buffer de profondeur
+            glUseProgram(_shaderShadowMap->id());                         //On utilise le shader shadow_map
+            drawSceneFromLight(_shaderShadowMap->id());                   //On dessine la scene avec le shader shadow_map
+            glBindFramebuffer(GL_FRAMEBUFFER,0);                          //DESACTIVATION
+
+            if(!is_not_last_step){
+                // activate the test shader
+                glUseProgram(_debugShaderShadowMap->id());
+
+                // clear buffers
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                // display the shadow map
+                drawShadowMap(_debugShaderShadowMap->id());
+            }
+        }
+    }
+
+
+
+
 //////////// POST-PROCESSING ////////////
 
-  if(_currentstep >= 3){
+    if(_currentstep >= 4){
 
       // activate the shader
       glUseProgram(_shaderPostProcessing->id());
@@ -451,6 +584,9 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
     _shaderNormal->load("shaders/normal.vert","shaders/normal.frag");
     _shaderDisplacement->load("shaders/displacement.vert","shaders/displacement.frag");
     _shaderPostProcessing->load("shaders/post-processing.vert","shaders/post-processing.frag");
+
+    _shaderShadowMap->load("shaders/shadow-map.vert","shaders/shadow-map.frag");
+    _debugShaderShadowMap->load("shaders/show-shadow-map.vert","shaders/show-shadow-map.frag");
   }
 
   // space bar : switch to next step
