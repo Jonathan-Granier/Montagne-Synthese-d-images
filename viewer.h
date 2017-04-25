@@ -64,7 +64,10 @@ class Viewer : public QGLWidget {
   QTimer        *_timer;    // timer that controls the animation
   unsigned int   _currentstep; // current shader index
   unsigned int   _stepnumber;
-  float          _amplitude; // the amplitude of the perlin noise
+  float          _amplitude1; // the amplitude 1 of the perlin noise
+  float          _amplitude2; // the amplitude 2 of the perlin noise
+  float          _position_x; // the "position" to translate in the perlin noise
+  float          _position_y;
   unsigned int   _shadowmap_resol;
 
   Grid   *_grid;      // the grid
@@ -108,7 +111,8 @@ class Viewer : public QGLWidget {
   GLuint _texShadow;
 
 
-  GLuint _texRoche;
+  GLuint _texLave;
+  GLuint _texEau;
 };
 
 #endif // VIEWER_H

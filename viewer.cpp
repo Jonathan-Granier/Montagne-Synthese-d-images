@@ -12,7 +12,10 @@ Viewer::Viewer(const QGLFormat &format)
     _timer(new QTimer(this)),
     _currentstep(4),
     _stepnumber(5),
-    _amplitude(2.0),
+    _amplitude1(2.0),
+    _amplitude2(4.0),
+    _position_x(0.0),
+    _position_y(0.0),
     _shadowmap_resol(512),
     _light(glm::vec3(0,0,1)),
     _mode(false) {
@@ -175,12 +178,30 @@ void Viewer::deleteFBO() {
 
 void Viewer::createTexture(){
   // generate 1 texture ids
-  glGenTextures(1,&_texRoche);
+  glGenTextures(1,&_texLave);
   // load image
-  QImage image = QGLWidget::convertToGLFormat(QImage("textures/roche.jpg"));
+  QImage image = QGLWidget::convertToGLFormat(QImage("textures/lave.jpg"));
 
   // activate texture
-  glBindTexture(GL_TEXTURE_2D,_texRoche);
+  glBindTexture(GL_TEXTURE_2D,_texLave);
+
+  // set texture parameters
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_MIRRORED_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_MIRRORED_REPEAT);
+
+  // store texture in the GPU
+  glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,image.width(),image.height(),0,
+           GL_RGBA,GL_UNSIGNED_BYTE,(const GLvoid *)image.bits());
+
+  // generate 1 texture ids
+  glGenTextures(1,&_texEau);
+  // load image
+  image = QGLWidget::convertToGLFormat(QImage("textures/eau.jpg"));
+
+  // activate texture
+  glBindTexture(GL_TEXTURE_2D,_texEau);
 
   // set texture parameters
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
@@ -194,7 +215,8 @@ void Viewer::createTexture(){
 }
 
 void Viewer::deleteTexture(){
-  glDeleteTextures(1,&_texRoche);
+  glDeleteTextures(1,&_texLave);
+  glDeleteTextures(1,&_texEau);
 }
 
 void Viewer::createVAO() {
@@ -275,8 +297,12 @@ void Viewer::drawTerrain() {
   glUniform1i(glGetUniformLocation(id,"normalmap"),0);
 
   glActiveTexture(GL_TEXTURE0+1);
-  glBindTexture(GL_TEXTURE_2D,_texRoche);
-  glUniform1i(glGetUniformLocation(id,"texroche"),1);
+  glBindTexture(GL_TEXTURE_2D,_texLave);
+  glUniform1i(glGetUniformLocation(id,"texlave"),1);
+
+  glActiveTexture(GL_TEXTURE0+2);
+  glBindTexture(GL_TEXTURE_2D,_texEau);
+  glUniform1i(glGetUniformLocation(id,"texeau"),2);
 
   // activate faces and draw!
   glBindVertexArray(_vaoTerrain);
@@ -357,8 +383,11 @@ void Viewer::paintGL() {
   // clear buffers
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  // send the amplitude to shader
-  glUniform1f(glGetUniformLocation(_shaderPerlinNoise->id(),"amplitude"),_amplitude);
+  // send the amplitudes to shader
+  glUniform1f(glGetUniformLocation(_shaderPerlinNoise->id(),"amplitude1"),_amplitude1);
+  glUniform1f(glGetUniformLocation(_shaderPerlinNoise->id(),"amplitude2"),_amplitude2);
+  glUniform1f(glGetUniformLocation(_shaderPerlinNoise->id(),"position_x"),_position_x);
+  glUniform1f(glGetUniformLocation(_shaderPerlinNoise->id(),"position_y"),_position_y);
   // draw base quad
   drawQuad();
   // disable shader
@@ -589,14 +618,41 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
     _currentstep = (_currentstep+1)%_stepnumber;
   }
 
-  // + key : increase amplitude
+  // + key : increase amplitude1
   if(ke->key()==Qt::Key_Plus) {
-    _amplitude += 0.15;
+    _amplitude1 += 0.1;
   }
 
-  // - key : decrease amplitude
+  // - key : decrease amplitude1
   if(ke->key()==Qt::Key_Minus) {
-    _amplitude -= 0.15;
+    _amplitude1 -= 0.1;
+  }
+
+  // page up key : increase amplitude2
+  if(ke->key()==Qt::Key_PageUp) {
+    _amplitude2 += 0.1;
+  }
+
+  // page down key : decrease amplitude2
+  if(ke->key()==Qt::Key_PageDown) {
+    _amplitude2 -= 0.1;
+  }
+
+
+  // arrow keys : move the perlin noise
+  if(ke->key()==Qt::Key_Up)
+    _position_y -= 0.03;
+  if(ke->key()==Qt::Key_Down)
+    _position_y += 0.03;
+  if(ke->key()==Qt::Key_Left)
+    _position_x += 0.03;
+  if(ke->key()==Qt::Key_Right)
+    _position_x -= 0.03;
+
+  // backspace : return to (0,0)
+  if(ke->key()==Qt::Key_Backspace){
+      _position_x = 0;
+      _position_y = 0;
   }
 
   updateGL();
