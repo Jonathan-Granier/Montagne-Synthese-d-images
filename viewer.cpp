@@ -12,6 +12,8 @@ Viewer::Viewer(const QGLFormat &format)
     _timer(new QTimer(this)),
     _currentstep(4),
     _stepnumber(5),
+    _amplitude(2.0),
+    _shadowmap_resol(512),
     _light(glm::vec3(0,0,1)),
     _mode(false) {
 
@@ -131,7 +133,7 @@ void Viewer::initFBO() {
 
   // create the texture for rendering depth values
   glBindTexture(GL_TEXTURE_2D,_texShadow);
-  glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,_grid->width(),_grid->height(),0,GL_DEPTH_COMPONENT,GL_FLOAT,NULL);
+  glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,_shadowmap_resol,_shadowmap_resol,0,GL_DEPTH_COMPONENT,GL_FLOAT,NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -153,7 +155,6 @@ void Viewer::initFBO() {
   // disable FBO
   glBindFramebuffer(GL_FRAMEBUFFER,0);
 
-
 }
 
 void Viewer::deleteFBO() {
@@ -168,6 +169,8 @@ void Viewer::deleteFBO() {
   glDeleteTextures(1,&_rendNormalId);
   glDeleteTextures(1,&_rendDepthId);
 
+  glDeleteFramebuffers(1,&_fbo_shadow);
+  glDeleteTextures(1,&_texShadow);
 }
 
 void Viewer::createTexture(){
@@ -282,6 +285,7 @@ void Viewer::drawTerrain() {
 
 }
 
+
 void Viewer::drawQuad() {
 
   // Draw the 2 triangles !
@@ -291,53 +295,34 @@ void Viewer::drawQuad() {
 }
 
 
-
 void Viewer::drawSceneFromLight(GLuint id) {
  // mdv matrix from the light point of view
-  const float size = _grid->height();
+  const float size = sqrt(2);
   glm::vec3 l   = glm::transpose(_cam->normalMatrix())*_light;
   glm::mat4 p   = glm::ortho<float>(-size,size,-size,size,-size,2*size);
   glm::mat4 v   = glm::lookAt(l, glm::vec3(0,0,0), glm::vec3(0,1,0));
   glm::mat4 m   = glm::mat4(1.0);
   glm::mat4 mv  = v*m;
 
- // glBindVertexArray(_vaoTerrain);
-
-  // draw several objects
-
-  //const float r = _mesh->radius*2;
-
-
-    const glm::vec3 pos = glm::vec3(0,1,0);
-    // send the modelview projection depth matrix
-    const glm::mat4 mvpDepth = p*glm::translate(mv,pos);
-    glUniformMatrix4fv(glGetUniformLocation(id,"mvpMat"),1,GL_FALSE,&mvpDepth[0][0]);
-
-    // draw faces
-   // glDrawElements(GL_TRIANGLES,3*_grid->nbFaces(),GL_UNSIGNED_INT,(void *)0);
-
-
-
-  // send initial mvp depth matrix
-  //const glm::mat4 mvpDepth_2 = p*mv;
-  //glUniformMatrix4fv(glGetUniformLocation(id,"mvpMat"),1,GL_FALSE,&mvpDepth_2[0][0]);
+  // send the modelview projection depth matrix
+  const glm::mat4 mvpDepth = p*mv;
+  glUniformMatrix4fv(glGetUniformLocation(id,"mvpMat"),1,GL_FALSE,&mvpDepth[0][0]);
 
   // draw the floor
   glBindVertexArray(_vaoTerrain);
   glDrawElements(GL_TRIANGLES,3*_grid->nbFaces(),GL_UNSIGNED_INT,(void *)0);
   glBindVertexArray(0);
 
-
   // disable VAO
- // glBindVertexArray(0);
+  glBindVertexArray(0);
 }
 
 
-void Viewer::drawShadowMap(GLuint id) {
+void Viewer::drawShadowMap() {
   // send depth texture
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D,_texShadow);
-  glUniform1i(glGetUniformLocation(id,"shadowmap"),0);
+  glUniform1i(glGetUniformLocation(_debugShaderShadowMap->id(),"shadowmap"),0);
 
   // draw the quad
   glBindVertexArray(_vaoQuad);
@@ -371,6 +356,9 @@ void Viewer::paintGL() {
   glUseProgram(_shaderPerlinNoise->id());
   // clear buffers
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  // send the amplitude to shader
+  glUniform1f(glGetUniformLocation(_shaderPerlinNoise->id(),"amplitude"),_amplitude);
   // draw base quad
   drawQuad();
   // disable shader
@@ -461,38 +449,42 @@ void Viewer::paintGL() {
 
 
 //////////// SHADOW_MAP ////////////
-    if (true)
-    {
-        is_not_last_step = (_currentstep > 3);
 
-        if(_currentstep >= 3){
-            glBindFramebuffer(GL_FRAMEBUFFER,_fbo_shadow);                       //ACTIVATION
-            glDrawBuffer(GL_NONE);                                        //On veut pas de couleur
-            glViewport(0,0,width(),height());                             //On dessine dans cette fenetre
-            glClear(GL_DEPTH_BUFFER_BIT);                                 //On nettoie le buffer de profondeur
-            glUseProgram(_shaderShadowMap->id());                         //On utilise le shader shadow_map
-            drawSceneFromLight(_shaderShadowMap->id());                   //On dessine la scene avec le shader shadow_map
-            glBindFramebuffer(GL_FRAMEBUFFER,0);                          //DESACTIVATION
+    bool is_last_step = (_currentstep == 3);
 
-            if(!is_not_last_step){
-                // activate the test shader
-                glUseProgram(_debugShaderShadowMap->id());
+    if(_currentstep >= 3){
+        glBindFramebuffer(GL_FRAMEBUFFER,_fbo_shadow);                       //ACTIVATION
+        glDrawBuffer(GL_NONE);                                        //On veut pas de couleur
+        glViewport(0,0,_shadowmap_resol,_shadowmap_resol);            //On dessine dans les dimensions de la shadowmap
+        glClear(GL_DEPTH_BUFFER_BIT);                                 //On nettoie le buffer de profondeur
+        glUseProgram(_shaderShadowMap->id());                         //On utilise le shader shadow_map
 
-                // clear buffers
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // send the result of Perlin noise to shader (we want to re-displace to compute the shadows)
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D,_perlHeightId);
+        glUniform1i(glGetUniformLocation(_shaderNormal->id(),"heightmap"),0);
+        drawSceneFromLight(_shaderShadowMap->id());                   //On dessine la scene avec le shader shadow_map
+        glBindFramebuffer(GL_FRAMEBUFFER,0);                          //DESACTIVATION
 
-                // display the shadow map
-                drawShadowMap(_debugShaderShadowMap->id());
-            }
+        if(is_last_step){
+            // activate the test shader
+            glUseProgram(_debugShaderShadowMap->id());
+
+            glViewport(0,0,width(),height());
+            // clear buffers
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            // display the shadow map
+            drawShadowMap();
         }
     }
-
-
 
 
 //////////// POST-PROCESSING ////////////
 
     if(_currentstep >= 4){
+
+      glViewport(0,0,width(),height());
 
       // activate the shader
       glUseProgram(_shaderPostProcessing->id());
@@ -506,6 +498,9 @@ void Viewer::paintGL() {
       glActiveTexture(GL_TEXTURE0+1);
       glBindTexture(GL_TEXTURE_2D,_rendNormalId);
       glUniform1i(glGetUniformLocation(_shaderPostProcessing->id(),"normalmap"),1);
+      glActiveTexture(GL_TEXTURE0+2);
+      glBindTexture(GL_TEXTURE_2D,_texShadow);
+      glUniform1i(glGetUniformLocation(_shaderPostProcessing->id(),"shadowmap"),2);
       glUniform3fv(glGetUniformLocation(_shaderPostProcessing->id(),"light"),1,&(_light[0]));
       // draw base quad
       drawQuad();
@@ -592,6 +587,16 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
   // space bar : switch to next step
   if(ke->key()==Qt::Key_Space) {
     _currentstep = (_currentstep+1)%_stepnumber;
+  }
+
+  // + key : increase amplitude
+  if(ke->key()==Qt::Key_Plus) {
+    _amplitude += 0.15;
+  }
+
+  // - key : decrease amplitude
+  if(ke->key()==Qt::Key_Minus) {
+    _amplitude -= 0.15;
   }
 
   updateGL();

@@ -4,6 +4,7 @@ out vec4 outBuffer;
 
 uniform sampler2D colormap;
 uniform sampler2D normalmap;
+uniform sampler2D shadowmap;
 
 uniform vec3      light;
 uniform int       anim;
