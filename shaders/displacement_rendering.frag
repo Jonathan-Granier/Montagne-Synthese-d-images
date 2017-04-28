@@ -9,6 +9,7 @@ in vec3 eyeView;
 in float depth;
 in vec4 pos_l;
 
+uniform int do_shadows;
 uniform vec3 light;
 uniform sampler2D normalmap;
 uniform sampler2D texlave;
@@ -95,13 +96,16 @@ void main() {
    // final color
    vec3 color = surface_color + diff*diffuse + spec*specular;
    float v=0;
-
-   int i;
-   vec4 shadcoord = pos_l;
-   for(i=0;i<16;i++){
-       v += texture(shadowmap,vec3(shadcoord.xy + poissonDisk[i]/300.0,(shadcoord.z-0.005)/shadcoord.w));
+   if(do_shadows == 1){
+       int i;
+       vec4 shadcoord = pos_l;
+       for(i=0;i<16;i++){
+           v += texture(shadowmap,vec3(shadcoord.xy + poissonDisk[i]/300.0,(shadcoord.z-0.005)/shadcoord.w));
+       }
+       v/=16.0;
    }
-   v/=16.0;
+   else
+       v=1.0;
 
    // gestion de la lave
    if(normal.r == 0 && normal.g == 0 && normal.b==1 && height>0.6)

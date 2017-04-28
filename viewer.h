@@ -42,8 +42,6 @@ class Viewer : public QGLWidget {
  private:
   void createVAO();
   void deleteVAO();
-  void drawTerrain();
-  void drawQuad();
 
   void createShaders();
   void deleteShaders();
@@ -56,14 +54,22 @@ class Viewer : public QGLWidget {
   void createTexture();
   void deleteTexture();
 
-  void drawSceneFromLight(GLuint id);
+  void drawQuad();
+  void drawPerlinNoise();
+  void drawNormals();
+  void drawSceneFromLight();
   void drawShadowMap();
+  void drawTerrain(bool do_shadows);
+  void doPostProcessing();
 
 
 
   QTimer        *_timer;    // timer that controls the animation
-  unsigned int   _currentstep; // current shader index
-  unsigned int   _stepnumber;
+
+  unsigned int   _currentstep; // current step of rendering
+  unsigned int   _stepnumber;  // number of steps
+
+  // Perlin noise parameters
   float          _amplitude1; // the amplitude 1 of the perlin noise
   float          _amplitude2; // the amplitude 2 of the perlin noise
   float          _position_x; // the "position" to translate in the perlin noise
@@ -72,7 +78,8 @@ class Viewer : public QGLWidget {
   float          _anim_x;
   float          _anim_y;
   bool           _do_rice;
-  unsigned int   _shadowmap_resol;
+
+  unsigned int   _shadowmap_resol; // resolution of the shadowmap
 
   Grid   *_grid;      // the grid
   Camera *_cam;    // the camera
@@ -82,9 +89,9 @@ class Viewer : public QGLWidget {
 
   Shader *_shaderPerlinNoise;
   Shader *_shaderNormal;
-  Shader *_shaderDisplacementRendering;
   Shader *_shaderShadowMap;
   Shader *_debugShaderShadowMap;
+  Shader *_shaderDisplacementRendering;
   Shader *_shaderPostProcessing;
 
   // vao/vbo ids (1 for the object, 1 for the viewport quad)
@@ -93,26 +100,24 @@ class Viewer : public QGLWidget {
   GLuint _terrain[2];
   GLuint _quad;
 
-  GLuint _buffers[5];
 
-
-  // render texture ids
+  // perlin texture ids
   GLuint _perlHeightId;
   GLuint _perlNormalId;
-  GLuint _perlDepthId;
 
   // render texture ids
   GLuint _rendColorId;
   GLuint _rendNormalId;
   GLuint _rendDepthId;
 
+  // shadow texture id
+  GLuint _texShadow;
+
 
   // fbo id
   GLuint _fbo_normal;
   GLuint _fbo_renderer;
   GLuint _fbo_shadow;
-
-  GLuint _texShadow;
 
 
   GLuint _texLave;

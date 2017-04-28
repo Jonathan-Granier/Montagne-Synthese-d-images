@@ -4,7 +4,8 @@ uniform float amplitude1;
 uniform float amplitude2;
 uniform float position_x;
 uniform float position_y;
-uniform bool  do_rice;
+uniform int   do_rice;
+
 in vec2 pos;
 
 out vec4 outBuffer;
@@ -126,7 +127,7 @@ float rice_banquet(float p, vec2 pente)
 void main() {
   vec3 motion = vec3(position_x,position_y,0.); // could be controlled via a global uniform variable
   float p;
-  if(!do_rice)// No Rice banquete?
+  if(do_rice == 1)// No Rice banquete?
       p = pnoise(pos+motion.xy,amplitude1,amplitude2,0.5,10)+motion.z;
   else{
       vec3 pDxDy = perlinHeightandAngle(motion,0.5,10);
