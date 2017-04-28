@@ -10,7 +10,7 @@ uniform vec3      light;
 uniform int       anim;
 
 in vec2 texcoord;
-
+/*
 vec4 shade(in vec2 coord) {
   vec4  nd = texture(normalmap,coord);
   vec4  c  = texture(colormap ,coord);
@@ -27,12 +27,13 @@ vec4 shade(in vec2 coord) {
 
   return vec4(c.xyz*(diff + spec),1);
 }
-
+*/
 void main() {
-  //vec2 coord = floor(texcoord*250)/250;
-  vec4 color = shade(texcoord);
+  vec4 color;
+  //color = shade(texcoord);
+  color = texture(colormap,texcoord);
 
-  vec4 fog_color = vec4 (0.8,0.8,0.8,1);
+  vec4 fog_color = vec4(0.8,0.8,0.8,1);
   float depth = min(1,max(0,texture(normalmap,texcoord).a));
 
   outBuffer = (1-depth)*color + depth*fog_color;
