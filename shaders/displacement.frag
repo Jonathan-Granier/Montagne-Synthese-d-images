@@ -47,7 +47,7 @@ void main() {
    float height = (-normal.a)*2+1;
    float x;
 
-   vec3 neige = vec3(0.5,0.5,0.5);
+   vec3 neige = vec3(0.9,0.3,0.4);
    vec3 caillou = vec3(0.3,0.3,0.3);
    vec3 foret = vec3(0.05,0.3,0.05);
    vec3 sable = vec3(0.3,0.25,0.05);
@@ -62,15 +62,15 @@ void main() {
       x = (height-0.5)*2;
       surface_color = x*neige + (1-x)*caillou;
    }
-   else if(height > -0.5){
-      x = height+0.5;
+   else if(height > 0){
+      x = height*2;
       surface_color = x*caillou + (1-x)*foret;
    }
-   else if(height > -1){
-      x = (height+1)*2;
+   else if(height > -0.5){
+      x = (height+0.5)*2;
       surface_color = x*foret + (1-x)*sable;
    }
-   else{ //height < -1
+   else{ //height < -0.5
       surface_color = sable;
    }
 
