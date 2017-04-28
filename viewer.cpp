@@ -289,7 +289,7 @@ void Viewer::drawTerrain() {
   const int id = _shaderDisplacement->id();
 
   // mdv matrix from the light point of view
-  const float size = 1;//sqrt(2);
+  const float size = 1;
   glm::vec3 l   = glm::transpose(_cam->normalMatrix())*_light;
   glm::mat4 p   = glm::ortho<float>(-size,size,-size,size,-size,2*size);
   glm::mat4 v   = glm::lookAt(l, glm::vec3(0,0,0), glm::vec3(0,-1,0));
@@ -346,7 +346,7 @@ void Viewer::drawQuad() {
 
 void Viewer::drawSceneFromLight(GLuint id) {
  // mdv matrix from the light point of view
-  const float size = 1;//sqrt(2);
+  const float size = 1;
   glm::vec3 l   = glm::transpose(_cam->normalMatrix())*_light;
   glm::mat4 p   = glm::ortho<float>(-size,size,-size,size,-size,2*size);
   glm::mat4 v   = glm::lookAt(l, glm::vec3(0,0,0), glm::vec3(0,-1,0));

@@ -13,12 +13,10 @@ in vec2 texcoord;
 
 void main() {
   vec4 color;
-  //color = shade(texcoord);
   color = texture(colormap,texcoord);
 
   vec4 fog_color = vec4(0.8,0.8,0.8,1);
   float depth = min(1,max(0,texture(normalmap,texcoord).a));
 
-  //outBuffer = (1-depth)*color + depth*fog_color;
-  outBuffer = color;
+  outBuffer = (1-depth)*color + depth*fog_color;
 }
