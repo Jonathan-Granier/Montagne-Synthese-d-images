@@ -1,5 +1,10 @@
 #version 330
 
+uniform float amplitude1;
+uniform float amplitude2;
+uniform float position_x;
+uniform float position_y;
+
 in vec2 pos;
 
 out vec4 outBuffer;
@@ -39,10 +44,18 @@ float pnoise(in vec2 p,in float amplitude,in float frequency,in float persistenc
 
 
 void main() {
-  vec3 motion = vec3(0.); // could be controlled via a global uniform variable
-  float p = pnoise(pos+motion.xy,1.0,2.0,0.5,10)+motion.z;
+  vec3 motion = vec3(position_x,position_y,0.); // could be controlled via a global uniform variable
+  float p = pnoise(pos+motion.xy,amplitude1,amplitude2,0.5,10)+motion.z;
 
+  float val = p*0.5+0.5;
+  val = min(val,0.9); // ajout de lacs
 
-  outBuffer =vec4(p*0.5+0.5);
+  if(val < 0.1){ // ajout des volcans
+    val = 0.2-val;
+    if(val > 0.15)
+      val = 0.15;
+  }
+
+  outBuffer =vec4(val);
 }
 

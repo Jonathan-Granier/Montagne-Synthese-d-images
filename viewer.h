@@ -57,13 +57,22 @@ class Viewer : public QGLWidget {
   void deleteTexture();
 
   void drawSceneFromLight(GLuint id);
-  void drawShadowMap(GLuint id);
+  void drawShadowMap();
 
 
 
   QTimer        *_timer;    // timer that controls the animation
   unsigned int   _currentstep; // current shader index
   unsigned int   _stepnumber;
+  float          _amplitude1; // the amplitude 1 of the perlin noise
+  float          _amplitude2; // the amplitude 2 of the perlin noise
+  float          _position_x; // the "position" to translate in the perlin noise
+  float          _position_y;
+  float          _anim;
+  float          _anim_x;
+  float          _anim_y;
+  bool           _do_anim;
+  unsigned int   _shadowmap_resol;
 
   Grid   *_grid;      // the grid
   Camera *_cam;    // the camera
@@ -106,7 +115,8 @@ class Viewer : public QGLWidget {
   GLuint _texShadow;
 
 
-  GLuint _texRoche;
+  GLuint _texLave;
+  GLuint _texEau;
 };
 
 #endif // VIEWER_H
