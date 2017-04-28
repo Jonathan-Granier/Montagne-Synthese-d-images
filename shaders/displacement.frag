@@ -96,24 +96,13 @@ void main() {
    vec3 color = surface_color + diff*diffuse + spec*specular;
    float v=0;
 
-   // *** TODO: compute visibility by comparing current depth and the depth in the shadow map ***
-   //float depth = texture(shadowmap,pos_l.xy).x;
-   /*float depth_shadowmap = texture(shadowmap,pos_l.xyz);
-   float depth_l = pos_l.x;
-   if(depth_shadowmap < depth_l)
-       v=0.5;
-   else*/
-       v=1.0;
-/*
    int i;
    vec4 shadcoord = pos_l;
    for(i=0;i<16;i++){
        v += texture(shadowmap,vec3(shadcoord.xy + poissonDisk[i]/300.0,(shadcoord.z-0.005)/shadcoord.w));
-       //shadcoord.xy += poissonDisk[i]/300.0;
    }
    v/=16.0;
-*/
-   //v=1;
+
    // gestion de la lave
    if(normal.r == 0 && normal.g == 0 && normal.b==1 && height>0.6)
        outTexBuffer = texture(texlave,texcoord+vec2(position_x+anim_x,position_y+anim_y));

@@ -19,7 +19,6 @@ Viewer::Viewer(const QGLFormat &format)
     _anim(0),
     _anim_x(1),
     _anim_y(0),
-    _do_anim(true),
     _shadowmap_resol(512),
     _light(glm::vec3(0,0,1)),
     _mode(false) {
@@ -357,6 +356,11 @@ void Viewer::drawSceneFromLight(GLuint id) {
   const glm::mat4 mvpDepth = p*mv;
   glUniformMatrix4fv(glGetUniformLocation(id,"mvpMat"),1,GL_FALSE,&mvpDepth[0][0]);
 
+  // send the result of Perlin noise to shader (we want to re-displace to compute the shadows)
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D,_perlHeightId);
+  glUniform1i(glGetUniformLocation(id,"heightmap"),0);
+
   // activate faces and draw!
   glBindVertexArray(_vaoTerrain);
   glDrawElements(GL_TRIANGLES,3*_grid->nbFaces(),GL_UNSIGNED_INT,(void *)0);
@@ -468,14 +472,10 @@ void Viewer::paintGL() {
   if(_currentstep >= 2){
       glBindFramebuffer(GL_FRAMEBUFFER,_fbo_shadow);                       //ACTIVATION
       glDrawBuffer(GL_NONE);                                        //On veut pas de couleur
-      glViewport(0,0,_shadowmap_resol,_shadowmap_resol);            //On dessine dans les dimensions de la shadowmap
       glClear(GL_DEPTH_BUFFER_BIT);                                 //On nettoie le buffer de profondeur
       glUseProgram(_shaderShadowMap->id());                         //On utilise le shader shadow_map
+      glViewport(0,0,_shadowmap_resol,_shadowmap_resol);            //On dessine dans les dimensions de la shadowmap
 
-      // send the result of Perlin noise to shader (we want to re-displace to compute the shadows)
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D,_perlHeightId);
-      glUniform1i(glGetUniformLocation(_shaderNormal->id(),"heightmap"),0);
       drawSceneFromLight(_shaderShadowMap->id());                   //On dessine la scene avec le shader shadow_map
       glBindFramebuffer(GL_FRAMEBUFFER,0);                          //DESACTIVATION
 
@@ -492,7 +492,7 @@ void Viewer::paintGL() {
       }
   }
 
-//////////// DISPLACEMENT ////////////
+//////////// DISPLACEMENT/RENDERING ////////////
 
   is_not_last_step = (_currentstep > 3);
 
@@ -551,11 +551,9 @@ void Viewer::paintGL() {
   }
 
   // Animation
-  if(_do_anim){
-      _anim = _anim+0.0003;
-      _anim_x = cos(_anim);
-      _anim_y = sin(_anim);
-  }
+  _anim = _anim+0.0003;
+  _anim_x = cos(_anim);
+  _anim_y = sin(_anim);
 }
 
 void Viewer::resizeGL(int width,int height) {
@@ -630,11 +628,6 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
 
     _shaderShadowMap->load("shaders/shadow-map.vert","shaders/shadow-map.frag");
     _debugShaderShadowMap->load("shaders/show-shadow-map.vert","shaders/show-shadow-map.frag");
-  }
-
-  // a key : toggle animation
-  if(ke->key()==Qt::Key_A) {
-    _do_anim = !_do_anim;
   }
 
   // space bar : switch to next step

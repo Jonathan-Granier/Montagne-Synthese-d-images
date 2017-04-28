@@ -28,6 +28,6 @@ void main() {
   depth       = - (vec4(mdvMat*vec4(pos,1.0)).z) / 2.5;
 
   // project position in light space to compute shadows
-  pos_l = (mvpLightMat*vec4(position,1.0))*0.5 + vec4(0.5,0.5,0.5,0.5);
+  pos_l = (mvpLightMat*vec4(pos,1.0))*0.5 + vec4(0.5,0.5,0.5,0.5);
 }
 
