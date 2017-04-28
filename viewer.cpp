@@ -19,6 +19,7 @@ Viewer::Viewer(const QGLFormat &format)
     _anim(0),
     _anim_x(1),
     _anim_y(0),
+    _do_rice(false),
     _shadowmap_resol(512),
     _light(glm::vec3(0,0,1)),
     _mode(false) {
@@ -291,7 +292,7 @@ void Viewer::drawTerrain() {
   const float size = 1;//sqrt(2);
   glm::vec3 l   = glm::transpose(_cam->normalMatrix())*_light;
   glm::mat4 p   = glm::ortho<float>(-size,size,-size,size,-size,2*size);
-  glm::mat4 v   = glm::lookAt(l, glm::vec3(0,0,0), glm::vec3(0,1,0));
+  glm::mat4 v   = glm::lookAt(l, glm::vec3(0,0,0), glm::vec3(0,-1,0));
   glm::mat4 m   = glm::mat4(1.0);
   glm::mat4 mv  = v*m;
   glm::mat4 mvp  = p*mv;
@@ -348,7 +349,7 @@ void Viewer::drawSceneFromLight(GLuint id) {
   const float size = 1;//sqrt(2);
   glm::vec3 l   = glm::transpose(_cam->normalMatrix())*_light;
   glm::mat4 p   = glm::ortho<float>(-size,size,-size,size,-size,2*size);
-  glm::mat4 v   = glm::lookAt(l, glm::vec3(0,0,0), glm::vec3(0,1,0));
+  glm::mat4 v   = glm::lookAt(l, glm::vec3(0,0,0), glm::vec3(0,-1,0));
   glm::mat4 m   = glm::mat4(1.0);
   glm::mat4 mv  = v*m;
 

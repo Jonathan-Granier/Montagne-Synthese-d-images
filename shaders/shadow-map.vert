@@ -11,6 +11,6 @@ uniform sampler2D heightmap;
 void main() {
   vec2 texcoord = position.xy*0.5+0.5;
   float height = texture(heightmap,texcoord).x;
-  vec3 pos = position+vec3(0,0,height-0.5);
+  vec3 pos = position-vec3(0,0,height-0.5);
   gl_Position = mvpMat*vec4(pos,1.0);
 }

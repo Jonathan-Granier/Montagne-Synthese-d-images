@@ -20,7 +20,7 @@ out vec4 pos_l;
 void main() {
   texcoord = position.xy*0.5+0.5;
   float height = texture(normalmap,texcoord).a;
-  vec3 pos = position+vec3(0,0,height-0.5);
+  vec3 pos = position-vec3(0,0,height-0.5);
   gl_Position = projMat*mdvMat*vec4(pos,1.0);
   vec3 normal = texture(normalmap,texcoord).xyz;
   normalView  = normalMat*normal;
