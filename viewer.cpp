@@ -145,7 +145,6 @@ void Viewer::initFBO() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 
@@ -290,7 +289,7 @@ void Viewer::drawTerrain() {
   const int id = _shaderDisplacement->id();
 
   // mdv matrix from the light point of view
-  const float size = sqrt(2);
+  const float size = 1;//sqrt(2);
   glm::vec3 l   = glm::transpose(_cam->normalMatrix())*_light;
   glm::mat4 p   = glm::ortho<float>(-size,size,-size,size,-size,2*size);
   glm::mat4 v   = glm::lookAt(l, glm::vec3(0,0,0), glm::vec3(0,1,0));
@@ -347,7 +346,7 @@ void Viewer::drawQuad() {
 
 void Viewer::drawSceneFromLight(GLuint id) {
  // mdv matrix from the light point of view
-  const float size = sqrt(2);
+  const float size = 1;//sqrt(2);
   glm::vec3 l   = glm::transpose(_cam->normalMatrix())*_light;
   glm::mat4 p   = glm::ortho<float>(-size,size,-size,size,-size,2*size);
   glm::mat4 v   = glm::lookAt(l, glm::vec3(0,0,0), glm::vec3(0,1,0));
@@ -358,7 +357,7 @@ void Viewer::drawSceneFromLight(GLuint id) {
   const glm::mat4 mvpDepth = p*mv;
   glUniformMatrix4fv(glGetUniformLocation(id,"mvpMat"),1,GL_FALSE,&mvpDepth[0][0]);
 
-  // draw the floor
+  // activate faces and draw!
   glBindVertexArray(_vaoTerrain);
   glDrawElements(GL_TRIANGLES,3*_grid->nbFaces(),GL_UNSIGNED_INT,(void *)0);
   glBindVertexArray(0);

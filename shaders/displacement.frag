@@ -75,13 +75,13 @@ void main() {
    }
 
    // gestion des lacs
-   if(normal.r == 0 && normal.g == 0 && normal.b==1 && height<0)
+   if(normal.r == 0 && normal.g == 0 && normal.b==1 && height<-0.4)
        surface_color = 0.3*texture(texeau,texcoord+vec2(position_x+anim_x,position_y+anim_y)).xyz;
 
 
    // Phong parameters (colors and roughness)
-   const vec3 diffuse  = vec3(0.8,0.8,0.7);
-   const vec3 specular = vec3(0.8,0.2,0.2);
+   const vec3 diffuse  = vec3(0.8,0.8,0.6);
+   const vec3 specular = vec3(0.8,0.6,0.6);
    const float et = 50.0;
 
    // normal / view and light directions (in camera space)
@@ -98,6 +98,13 @@ void main() {
 
    // *** TODO: compute visibility by comparing current depth and the depth in the shadow map ***
    //float depth = texture(shadowmap,pos_l.xy).x;
+   /*float depth_shadowmap = texture(shadowmap,pos_l.xyz);
+   float depth_l = pos_l.x;
+   if(depth_shadowmap < depth_l)
+       v=0.5;
+   else*/
+       v=1.0;
+/*
    int i;
    vec4 shadcoord = pos_l;
    for(i=0;i<16;i++){
@@ -105,10 +112,10 @@ void main() {
        //shadcoord.xy += poissonDisk[i]/300.0;
    }
    v/=16.0;
-
+*/
    //v=1;
    // gestion de la lave
-   if(normal.r == 0 && normal.g == 0 && normal.b==1 && height>0)
+   if(normal.r == 0 && normal.g == 0 && normal.b==1 && height>0.6)
        outTexBuffer = texture(texlave,texcoord+vec2(position_x+anim_x,position_y+anim_y));
    else
        outTexBuffer = vec4(color*v,1.0);
