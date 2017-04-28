@@ -82,7 +82,7 @@ class Viewer : public QGLWidget {
 
   Shader *_shaderPerlinNoise;
   Shader *_shaderNormal;
-  Shader *_shaderDisplacement;
+  Shader *_shaderDisplacementRendering;
   Shader *_shaderShadowMap;
   Shader *_debugShaderShadowMap;
   Shader *_shaderPostProcessing;

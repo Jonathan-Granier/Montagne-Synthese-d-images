@@ -259,7 +259,7 @@ void Viewer::deleteVAO() {
 void Viewer::createShaders() {
   _shaderPerlinNoise = new Shader();
   _shaderNormal = new Shader();
-  _shaderDisplacement = new Shader();
+  _shaderDisplacementRendering = new Shader();
   _shaderPostProcessing = new Shader();
 
   _shaderShadowMap = new Shader();
@@ -267,7 +267,7 @@ void Viewer::createShaders() {
 
   _shaderPerlinNoise->load("shaders/noise.vert","shaders/noise.frag");
   _shaderNormal->load("shaders/normal.vert","shaders/normal.frag");
-  _shaderDisplacement->load("shaders/displacement.vert","shaders/displacement.frag");
+  _shaderDisplacementRendering->load("shaders/displacement_rendering.vert","shaders/displacement_rendering.frag");
   _shaderPostProcessing->load("shaders/post-processing.vert","shaders/post-processing.frag");
 
   _shaderShadowMap->load("shaders/shadow-map.vert","shaders/shadow-map.frag");
@@ -278,7 +278,7 @@ void Viewer::createShaders() {
 void Viewer::deleteShaders() {
   delete _shaderPerlinNoise;  _shaderPerlinNoise = NULL;
   delete _shaderNormal; _shaderNormal = NULL;
-  delete _shaderDisplacement; _shaderDisplacement = NULL;
+  delete _shaderDisplacementRendering; _shaderDisplacementRendering = NULL;
   delete _shaderShadowMap; _shaderShadowMap = NULL;
   delete _debugShaderShadowMap; _debugShaderShadowMap = NULL;
   delete _shaderPostProcessing; _shaderPostProcessing = NULL;
@@ -286,7 +286,7 @@ void Viewer::deleteShaders() {
 
 void Viewer::drawTerrain() {
   // shader id
-  const int id = _shaderDisplacement->id();
+  const int id = _shaderDisplacementRendering->id();
 
   // mdv matrix from the light point of view
   const float size = 1;
@@ -509,7 +509,7 @@ void Viewer::paintGL() {
       }
       glViewport(0,0,width(),height());
       // activate the shader
-      glUseProgram(_shaderDisplacement->id());
+      glUseProgram(_shaderDisplacementRendering->id());
       // clear buffers
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -625,7 +625,7 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
   if(ke->key()==Qt::Key_R) {
     _shaderPerlinNoise->load("shaders/noise.vert","shaders/noise.frag");
     _shaderNormal->load("shaders/normal.vert","shaders/normal.frag");
-    _shaderDisplacement->load("shaders/displacement.vert","shaders/displacement.frag");
+    _shaderDisplacementRendering->load("shaders/displacement_rendering.vert","shaders/displacement_rendering.frag");
     _shaderPostProcessing->load("shaders/post-processing.vert","shaders/post-processing.frag");
 
     _shaderShadowMap->load("shaders/shadow-map.vert","shaders/shadow-map.frag");
