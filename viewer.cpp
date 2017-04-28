@@ -412,6 +412,7 @@ void Viewer::paintGL() {
   glUniform1f(glGetUniformLocation(_shaderPerlinNoise->id(),"amplitude2"),_amplitude2);
   glUniform1f(glGetUniformLocation(_shaderPerlinNoise->id(),"position_x"),_position_x);
   glUniform1f(glGetUniformLocation(_shaderPerlinNoise->id(),"position_y"),_position_y);
+  glUniform1f(glGetUniformLocation(_shaderPerlinNoise->id(),"do_rice"),_do_rice);
   // draw base quad
   drawQuad();
   // disable shader
@@ -653,6 +654,10 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
   // page down key : decrease amplitude2
   if(ke->key()==Qt::Key_PageDown) {
     _amplitude2 -= 0.1;
+  }
+
+  if(ke->key() == Qt::Key_Z){
+      _do_rice = !_do_rice;
   }
 
 

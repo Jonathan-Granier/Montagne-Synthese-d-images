@@ -71,6 +71,7 @@ class Viewer : public QGLWidget {
   float          _anim;
   float          _anim_x;
   float          _anim_y;
+  bool           _do_rice;
   unsigned int   _shadowmap_resol;
 
   Grid   *_grid;      // the grid

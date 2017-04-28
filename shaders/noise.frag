@@ -94,7 +94,7 @@ float rice_banquet(float p, vec2 pente)
     float seuil_m = -0.1;//Doit être > aux volcan == -0.4
     float seuil_M = 0.7;//0.5; // doit être < aux lac == 0.5
     float amplitude = 0.05;
-    float angleMax = 0.2;
+    float angleMax = 0.12;
     float angleNorthMax = 0;
     float initialp= p;
 
@@ -125,10 +125,14 @@ float rice_banquet(float p, vec2 pente)
 
 void main() {
   vec3 motion = vec3(position_x,position_y,0.); // could be controlled via a global uniform variable
-  float p = pnoise(pos+motion.xy,amplitude1,amplitude2,0.5,10)+motion.z;
-  //vec3 pDxDy = perlinHeightandAngle(motion,0.5,10);
-  //p += motion.z;
-  //p = rice_banquet(p, pDxDy.yz); // ajout des rizières
+  float p;
+  if(false)// No Rice banquete?
+      p = pnoise(pos+motion.xy,amplitude1,amplitude2,0.5,10)+motion.z;
+  else{
+      vec3 pDxDy = perlinHeightandAngle(motion,0.5,10);
+      p = pDxDy.x +motion.z;
+      p = rice_banquet(p, pDxDy.yz); // ajout des rizières
+  }
 
   float val = p*0.5+0.5;
   val = min(val,0.75); // ajout de lacs
